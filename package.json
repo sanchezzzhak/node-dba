@@ -1,0 +1,36 @@
+{
+  "name": "node-dba",
+  "version": "1.0.0",
+  "description": "Nodejs database ActiveRecord for (mySQL, Postgress, ClickHouse)",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha -- -R dot tests/*.spec.js",
+    "test-coverage-text": "nyc --check-coverage --lines 90 --per-file --reporter=text mocha -- -R dot tests/*.spec.js",
+    "test-coverage-html": "nyc --reporter=html mocha -- -R dot tests/*.spec.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sanchezzzhak/node-dba.git"
+  },
+  "keywords": [
+    "mysql",
+    "postgress",
+    "clickhouse",
+    "active record",
+    "migrations",
+    "model"
+  ],
+  "author": "sanchezzzhak",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sanchezzzhak/node-dba/issues"
+  },
+  "homepage": "https://github.com/sanchezzzhak/node-dba#readme",
+  "engines": {
+    "node": ">= 16.x",
+    "npm": ">= 8.x"
+  },
+  "devDependencies": {
+    "mocha": "^10.0.0"
+  }
+}
