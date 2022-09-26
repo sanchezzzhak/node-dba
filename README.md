@@ -13,6 +13,7 @@ const PostgressConfig = {
   database: process.env.PG_DATABASE,
   username: process.env.PG_USERNAME,
   password: process.env.PG_PASSWORD,
+  connectionOptions: {},
 }
 export default PostgressConfig;
 ```
