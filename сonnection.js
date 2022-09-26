@@ -13,8 +13,12 @@ export const SCHEMA_MAPS = {
 
 export default class BaseConnection {
   EVENTS = EVENTS;
-  /*** @type {string} the Data Source Name, or DSN, contains the information required to connect to the database.*/
-  dsn;
+  /*** @type {string} the host required */
+  host;
+  /*** @type {number} the port required.*/
+  port = 0;
+  /*** @type {string} the database name required */
+  database;
   /*** @type {string} the username for establishing DB connection. Defaults to `null` meaning no username to use. */
   username;
   /*** @type {string} he password for establishing DB connection. Defaults to `null` meaning no password to use. */

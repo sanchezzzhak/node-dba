@@ -1,13 +1,13 @@
 const fs = require('fs');
 const path = require('path');
-const Connection = require('./pg/connection');
 
-const configMap = {};
-const instances = {};
-const SUPPORT_DRIVERS = [
+export const SUPPORT_DRIVERS = [
   'pg'
 ];
 
+
+const configMap = {};
+const instances = {};
 export default class ConnectionManager
 {
   /**
