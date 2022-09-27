@@ -1,22 +1,29 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 
-export const SUPPORT_DRIVERS = [
-  'pg'
+const SUPPORT_DRIVERS = [
+  'pg',
 ];
-
 
 const configMap = {};
 const instances = {};
-export default class ConnectionManager
-{
+
+class DBA {
+  
+  /**
+   * get array support drivers for lib
+   * @returns {[string]}
+   */
+  static getSupportDrives() {
+    return SUPPORT_DRIVERS;
+  }
   /**
    * get db connection
    * @param {string} configName
    * @returns {*}
    */
   static instance(configName = 'db') {
-    if(instances[configName] !== void 0) {
+    if (instances[configName] !== void 0) {
       return instances[configName];
     }
     
@@ -35,15 +42,15 @@ export default class ConnectionManager
     }
     
     try {
-      const conn = new (
+      instances[configName] = new (
         require('./' + driver + '/connection')
       )(config);
-      conn.checkInstallLib();
-      return instances[configName] = conn;
       
     } catch (err) {
       throw new Error(err);
     }
+    
+    return instances[configName];
   }
   
   /**
@@ -53,14 +60,14 @@ export default class ConnectionManager
   static loadConfigsForDir(dirPath) {
     fs.readdirSync(dirPath, {
       withFileTypes: true,
-      recursive: false,
-    })
-    .filter((name => /\.(js|json)$/.test(name)))
-    .forEach((file => {
-      let name = path.parse(file).name;
-      configMap[name] = require(dirPath + '/' + file);
+    }).filter((file => /\.(js|json)$/.test(file.name))).forEach((file => {
+      let fileName = file.name;
+      let name = path.parse(fileName).name;
+      configMap[name] = require(dirPath + '/' + fileName);
     }));
     
   }
-
+  
 }
+
+module.exports = DBA;

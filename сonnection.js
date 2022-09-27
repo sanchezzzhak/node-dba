@@ -1,18 +1,19 @@
-/*** Base Events list */
-export const EVENTS = {
+const EventEmitter = require('eventemitter2');
+
+const EVENTS = {
   EVENT_AFTER_OPEN: 'afterOpen',
+  EVENT_BEFORE_OPEN: 'afterOpen',
+  EVENT_CONNECT: 'connect',
+  EVENT_ERROR: 'error',
   EVENT_BEGIN_TRANSACTION: 'beginTransaction',
   EVENT_COMMIT_TRANSACTION: 'commitTransaction',
   EVENT_ROLLBACK_TRANSACTION: 'rollbackTransaction',
-};
+}
 
-export const SCHEMA_MAPS = {
-  'mysql': '',
-  'pgsql': '',
-};
-
-export default class BaseConnection {
+class BaseConnection extends EventEmitter {
+  
   EVENTS = EVENTS;
+  
   /*** @type {string} the host required */
   host;
   /*** @type {number} the port required.*/
@@ -25,8 +26,6 @@ export default class BaseConnection {
   password;
   /*** @type {Object} additional connection options */
   connectionOptions;
-  /*** @type {Object} driver lib */
-  #driver;
   
   #initConnection() {
   
@@ -49,3 +48,5 @@ export default class BaseConnection {
   }
   
 }
+
+module.exports = BaseConnection;

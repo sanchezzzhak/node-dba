@@ -9,13 +9,12 @@ Micro engine for active record layout for database (MySQL, Postgress, ClickHouse
 
 const PostgressConfig = {
   driver: 'pg',
-  dsn: 'localhost:5001',
   database: process.env.PG_DATABASE,
   username: process.env.PG_USERNAME,
   password: process.env.PG_PASSWORD,
   connectionOptions: {},
 }
-export default PostgressConfig;
+module.exports = PostgressConfig;
 ```
 save the config to any folder for example `config/local/db/pg.js`
 
