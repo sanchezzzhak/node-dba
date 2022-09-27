@@ -1,7 +1,7 @@
 const BaseConnection = require('../сonnection');
 const {Pool, Client} = require('pg');
 
-class Connection extends BaseConnection {
+class PgConnection extends BaseConnection {
   
   /*** @type {Object} lib */
   #pool;
@@ -20,15 +20,17 @@ class Connection extends BaseConnection {
   }
   
   async open() {
-    
-    const pool = new Pool({
+    if (this.#pool) {
+      return;
+    }
+    const config = {
       host: this.host,
       database: this.database,
       user: this.username,
       password: this.password,
       port: this.port,
-    });
-    this.#pool = pool;
+    };
+    const pool = new Pool(config);
     
     pool.on('connect', (client) => {
       this.emit(this.EVENTS.EVENT_CONNECT, {client});
@@ -36,6 +38,7 @@ class Connection extends BaseConnection {
     pool.on('error', (err, client) => {
       this.emit(this.EVENTS.EVENT_ERROR, {err, client});
     });
+    this.#pool = pool;
     
     this.emit(this.EVENTS.EVENT_AFTER_OPEN, {});
     try {
@@ -43,9 +46,20 @@ class Connection extends BaseConnection {
     } catch (err) {
       this.emit(this.EVENTS.EVENT_ERROR, {err});
     }
+    
     this.emit(this.EVENTS.EVENT_BEFORE_OPEN, {});
+  }
+  
+  async close(){
+    if (!this.#pool) {
+      return;
+    }
+    
+    this.#pool.end();
+    this.#pool.off();
+    this.#pool = void 0;
   }
   
 }
 
-module.exports = Connection;
+module.exports = PgConnection;

@@ -47,6 +47,32 @@ class BaseConnection extends EventEmitter {
     throw new Error('need implementation close() method for current class')
   }
   
+  quoteTableName(table) {
+    throw new Error('need implementation quoteTableName() method for current class')
+  }
+  
+  quoteValue(value) {
+    throw new Error('need implementation quoteTableName() method for current class')
+  }
+  
+  quoteColumnName(name) {
+    throw new Error('need implementation quoteColumnName() method for current class')
+  }
+  
+  getQueryBuilder() {
+    throw new Error('need implementation getQueryBuilder() method for current class')
+  }
+  
+  getTableSchema(name, refresh = false){
+    throw new Error('need implementation getQueryBuilder() method for current class')
+  }
+  
+  getLastInsertID(sequenceName = '') {
+    throw new Error('need implementation getLastInsertID() method for current class')
+  }
+  
+  
+  
 }
 
 module.exports = BaseConnection;
