@@ -1,63 +1,126 @@
 const BaseConnection = require('../сonnection');
+
 const {Pool, Client} = require('pg');
+
+/**
+ * @typedef ConfigPostgres
+ * @property {string} host
+ * @property {number} port
+ * @property {string} database
+ * @property {string} username
+ * @property {string} password
+ * @property {string} ssl
+ * @property {number} poolSize
+ * @property {number} connectTimeoutMS
+ *
+ * @property {ConfigPostgres[]} slaves
+ */
+
 
 class PgConnection extends BaseConnection {
   
   /*** @type {Object} lib */
-  #pool;
+  #master;
+  #slaves = [];
+  #config = {};
+  
+  isReplicated = false;
   
   static get getDriverName() {
     return 'pg';
   }
   
-  constructor(config = {}) {
+  /**
+   * @param {ConfigPostgres} config
+   */
+  constructor(config) {
     super();
-    this.host = config.host ?? 'localhost';
-    this.port = config.port ?? 5432;
-    this.database = config.database ?? '';
-    this.username = config.username ?? void 0;
-    this.password = config.password ?? void 0;
-  }
-  
-  async open() {
-    if (this.#pool) {
+    
+    if (!config) {
       return;
     }
-    const config = {
-      host: this.host,
-      database: this.database,
-      user: this.username,
-      password: this.password,
-      port: this.port,
-    };
-    const pool = new Pool(config);
+    this.#config = config;
+    this.isReplicated = config.slaves && config.slaves.length;
     
+  }
+  
+  /**
+   *
+   * @returns {Promise<void>}
+   */
+  async connect() {
+    
+    if (this.#master) {
+      return;
+    }
+  
+    if (this.isReplicated) {
+      for (const config of this.#config.slaves) {
+        this.#slaves.push(
+          await this.createPool(config)
+        )
+      }
+    }
+    
+    this.#master = await this.createPool(this.#config);
+  }
+  
+  async disconnect(){
+    await this.closePool(this.#master);
+  }
+  
+  async closePool(pool) {
+    if (!pool) {
+      return;
+    }
+    
+    return await pool.end();
+  }
+  
+  /**
+   * Create Pool on master or slaves+master
+   * @param {ConfigPostgres|{}} options
+   * @returns {Promise<void>}
+   */
+  async createPool(options) {
+  
+    const config = {
+      host: options.host ?? 'localhost',
+      database: options.database,
+      user: options.username,
+      password: options.password,
+      port: options.port,
+      ssl: options.ssl ?? void 0,
+      connectionTimeoutMillis: options.connectTimeoutMS ?? 2000,
+      max: options.poolSize ?? 10
+    }
+    
+    const pool = new Pool(config);
     pool.on('connect', (client) => {
       this.emit(this.EVENTS.EVENT_CONNECT, {client});
     });
     pool.on('error', (err, client) => {
       this.emit(this.EVENTS.EVENT_ERROR, {err, client});
     });
-    this.#pool = pool;
+    this.#master = pool;
     
-    this.emit(this.EVENTS.EVENT_AFTER_OPEN, {});
     try {
-      await pool.query('SELECT NOW()');
+      let result = await pool.query('SELECT version()');
     } catch (err) {
       this.emit(this.EVENTS.EVENT_ERROR, {err});
     }
     
-    this.emit(this.EVENTS.EVENT_BEFORE_OPEN, {});
-  }
-  
-  async close(){
-    if (!this.#pool) {
-      return;
-    }
-    
-    this.#pool.end();
-    this.#pool.off();
-    this.#pool = void 0;
+    return new Promise((resolve, reject) => {
+      pool.connect((err, client, release) => {
+        if (err) {
+          return reject(err);
+        }
+        // add attach to events (later)
+        
+        release();
+        resolve(pool);
+      })
+    })
   }
   
 }

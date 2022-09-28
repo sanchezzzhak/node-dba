@@ -9,17 +9,16 @@ describe('tests connections', function() {
   this.timeout(TIMEOUT);
   
   it('postgress test connection', async function() {
-    let conn = DBA.instance('pg');
-    conn.on(conn.EVENTS.EVENT_CONNECT, (client) => {
+    let db = DBA.instance('pg');
+    db.on(db.EVENTS.EVENT_CONNECT, (client) => {
     });
-    conn.on(conn.EVENTS.EVENT_ERROR, (err) => {
+    db.on(db.EVENTS.EVENT_ERROR, (err) => {
       console.error('test-error:', err);
     });
+  
+    await db.connect();
+    let builder = db.getQueryBuilder();
     
-    try {
-      await conn.open();
-    } catch (e) {
-    }
     return Promise.resolve();
   });
   

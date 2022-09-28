@@ -1,4 +1,7 @@
 const EventEmitter = require('eventemitter2');
+const QueryBuilder = require('./query-builder');
+const Command = require('./command');
+
 
 const EVENTS = {
   EVENT_AFTER_OPEN: 'afterOpen',
@@ -14,37 +17,16 @@ class BaseConnection extends EventEmitter {
   
   EVENTS = EVENTS;
   
-  /*** @type {string} the host required */
-  host;
-  /*** @type {number} the port required.*/
-  port = 0;
-  /*** @type {string} the database name required */
-  database;
-  /*** @type {string} the username for establishing DB connection. Defaults to `null` meaning no username to use. */
-  username;
-  /*** @type {string} he password for establishing DB connection. Defaults to `null` meaning no password to use. */
-  password;
-  /*** @type {Object} additional connection options */
-  connectionOptions;
-  
-  #initConnection() {
-  
-  }
-  
   static get driverName() {
     throw new Error('need implementation driverName() getter for current class')
   }
-  
-  checkInstallLib() {
-    // skip default release
+
+  async connect() {
+    throw new Error('need implementation connect() method for current class')
   }
   
-  open() {
-    throw new Error('need implementation open() method for current class')
-  }
-  
-  close() {
-    throw new Error('need implementation close() method for current class')
+  async disconnect() {
+    throw new Error('need implementation disconnect() method for current class')
   }
   
   quoteTableName(table) {
@@ -59,8 +41,27 @@ class BaseConnection extends EventEmitter {
     throw new Error('need implementation quoteColumnName() method for current class')
   }
   
+  /**
+   * Returns the query builder for the current DB connection.
+   * @return {QueryBuilder}
+   */
   getQueryBuilder() {
-    throw new Error('need implementation getQueryBuilder() method for current class')
+    return new QueryBuilder(this);
+  }
+  
+  /**
+   * Creates a command for execution.
+   *
+   * @param {string} sql - the SQL statement to be executed
+   * @param {{}} params - the parameters to be bound to the SQL statement
+   * @return {Command}
+   */
+  createCommand(sql, params = {}) {
+    return new Command({
+      db: this,
+      sql,
+      params
+    });
   }
   
   getTableSchema(name, refresh = false){
@@ -70,8 +71,6 @@ class BaseConnection extends EventEmitter {
   getLastInsertID(sequenceName = '') {
     throw new Error('need implementation getLastInsertID() method for current class')
   }
-  
-  
   
 }
 

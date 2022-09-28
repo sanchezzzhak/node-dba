@@ -3,7 +3,7 @@
 
 class QueryBuilder
 {
-  /*** @type {PgConnection} - the database connection */
+  /*** @type {PgConnection|Connection} - the database connection */
   db;
   /*** @type {string} - the separator between different fragments of a SQL statement. */
   separator = ' ';
@@ -24,3 +24,4 @@ class QueryBuilder
 }
 
 
+module.exports = QueryBuilder;
