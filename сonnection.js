@@ -1,19 +1,19 @@
-const EventEmitter = require('eventemitter2');
+const Base = require('./base');
 const QueryBuilder = require('./query-builder');
 const Command = require('./command');
 
 
 const EVENTS = {
-  EVENT_AFTER_OPEN: 'afterOpen',
-  EVENT_BEFORE_OPEN: 'afterOpen',
-  EVENT_CONNECT: 'connect',
-  EVENT_ERROR: 'error',
-  EVENT_BEGIN_TRANSACTION: 'beginTransaction',
-  EVENT_COMMIT_TRANSACTION: 'commitTransaction',
-  EVENT_ROLLBACK_TRANSACTION: 'rollbackTransaction',
+  AFTER_OPEN: 'afterOpen',
+  BEFORE_OPEN: 'beforeOpen',
+  CONNECT: 'connect',
+  ERROR: 'error',
+  BEGIN_TRANSACTION: 'beginTransaction',
+  COMMIT_TRANSACTION: 'commitTransaction',
+  ROLLBACK_TRANSACTION: 'rollbackTransaction',
 }
 
-class BaseConnection extends EventEmitter {
+class BaseConnection extends Base {
   
   EVENTS = EVENTS;
   

@@ -1,4 +1,4 @@
-# node-dba
+# node-dba (in developing)
 Micro engine for active record layout for database (MySQL, Postgress, ClickHouse)
 
 
@@ -22,14 +22,14 @@ save the config to any folder for example `config/local/db/pg.js`
 
 ```js
 const dba = require('node-dba');
+// init all configs for dir
 dba.loadConfigsForDir(__dirname + '/config/local/db');
-const conn = dba.instance('db');
-conn.on('openBefore', (event, err) => {
-  !err 
-  ? console.log('connection success')
-  : console.error('connection error', err);
-});
-conn.open();
+// ...
+// get db connect
+const db = dba.instance('pg');
+
+
+
 
 ```
 
