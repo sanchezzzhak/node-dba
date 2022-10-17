@@ -1,5 +1,5 @@
 const BaseConnection = require('../сonnection');
-
+const Schema = require('./schema');
 const {Pool, Client} = require('pg');
 
 /**
@@ -120,6 +120,12 @@ class PgConnection extends BaseConnection {
         release();
         resolve(pool);
       })
+    })
+  }
+  
+  getSchema() {
+    return new Schema({
+      db: this
     })
   }
   

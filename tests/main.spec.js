@@ -5,26 +5,28 @@ const Query = require('../query');
 DBA.loadConfigsForDir(__dirname + '/config/db');
 
 const TIMEOUT = 20000;
-const DB = 'pg';
-
+const PG = 'pg';
 
 describe('tests connections', function() {
   this.timeout(TIMEOUT);
   
   it('postgress test connection', async function() {
-    let db = DBA.instance(DB);
+    let db = DBA.instance(PG);
     await db.connect();
     await db.disconnect();
     return Promise.resolve();
   });
   
-  it('test query', async function() {
-    let db = DBA.instance(DB);
-    let query = new Query();
-    query.select(['1 as ping']);
-    query.one(db);
+  it('test impl pg driverName', async function() {
+    let db = DBA.instance(PG);
+    expect(db.constructor.getDriverName).to.equal('pg');
   });
   
-  
+  it('test query', async function() {
+    let db = DBA.instance(PG);
+    let query = new Query();
+    query.select(['0 as pong'], {});
+    console.log( query.createCommand(db).getRawSql());
+  });
   
 });

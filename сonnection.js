@@ -17,28 +17,54 @@ class BaseConnection extends Base {
   
   EVENTS = EVENTS;
   
+  /**
+   * get driver name for currently connection
+   */
   static get driverName() {
     throw new Error('need implementation driverName() getter for current class')
   }
-
+  
+  /**
+   * Returns instance for the currently active master connection.
+   * @returns {Promise<void>}
+   */
   async connect() {
     throw new Error('need implementation connect() method for current class')
   }
   
+  /**
+   * the currently class instance associated with this DB connection.
+   * @returns {Promise<void>}
+   */
   async disconnect() {
     throw new Error('need implementation disconnect() method for current class')
   }
   
+  /**
+   * Quotes a table name for use in a query.
+   * @param {string} table - table name
+   * @returns {string}
+   */
   quoteTableName(table) {
-    throw new Error('need implementation quoteTableName() method for current class')
+    return this.getSchema().quoteTableName(table);
   }
   
+  /**
+   * Quotes a string value for use in a query.
+   * @param {string} value - string to be quoted
+   * @returns {string}
+   */
   quoteValue(value) {
-    throw new Error('need implementation quoteTableName() method for current class')
+    return this.getSchema().quoteValue(value);
   }
   
+  /**
+   * Quotes a column name for use in a query.
+   * @param {string} name - column name
+   * @returns {string}
+   */
   quoteColumnName(name) {
-    throw new Error('need implementation quoteColumnName() method for current class')
+    return this.getSchema().quoteColumnName(name);
   }
   
   /**
@@ -46,7 +72,7 @@ class BaseConnection extends Base {
    * @return {QueryBuilder}
    */
   getQueryBuilder() {
-    return new QueryBuilder(this);
+    return this.getSchema().getQueryBuilder();
   }
   
   /**
@@ -65,11 +91,15 @@ class BaseConnection extends Base {
   }
   
   getTableSchema(name, refresh = false){
-    throw new Error('need implementation getQueryBuilder() method for current class')
+    return this.getSchema().getTableSchema(name, refresh);
   }
   
   getLastInsertID(sequenceName = '') {
-    throw new Error('need implementation getLastInsertID() method for current class')
+    return this.getSchema().getLastInsertID(sequenceName);
+  }
+  
+  getSchema() {
+    throw new Error('need implementation getSchema() method for current class')
   }
   
 }

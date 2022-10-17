@@ -32,15 +32,18 @@ class QueryBuilder {
       select += ' DISTINCT';
     }
     
+    if (selectOption) {
+      select += ' ' + selectOption;
+    }
+    
     if (helper.empty(columns)) {
       select += ' *';
     }
     
     let result = [];
-    console.log(columns)
+    
     for (let key in columns) {
       let column = columns[key];
-      
       if (column === void 0) {
         continue;
       }
@@ -60,18 +63,17 @@ class QueryBuilder {
         result.push(`(${sql}) AS ` + this.db.quoteColumnName(key));
         continue;
       }
-      
+
       if (!Number.isFinite(key) && key !== column) {
-        let sqlPart = column;
-           if (column.indexOf('(') === -1) {
+        let sqlPart = String(column);
+        if (column.indexOf('(') === -1) {
           sqlPart = this.db.quoteColumnName(column);
         }
-        result.push(`(${sqlPart} AS ` + this.db.quoteColumnName(key));
+        result.push(`${sqlPart} AS ` + this.db.quoteColumnName(key));
         continue;
       }
       
       if (column.indexOf('(') === -1) {
-        console.log(group);
         let match = /^(.*?)(?:i:\s+as\s+| +)([\w.-]+)$/ig.exec(column);
         if (match !== null) {
           result.push(
@@ -95,18 +97,20 @@ class QueryBuilder {
   build(query, parameters = {}) {
     let params = helper.empty(parameters)
       ? query.params
-      : {...parameters, ...query.params};
+      : helper.merge(parameters, query.params);
     
     let clauses = [];
     clauses.push(
       this.buildSelect(
         query.getSelect(),
-        params, query.getDistinct(),
+        params,
+        query.getDistinct(),
         query.getSelectOption(),
       ),
     );
     clauses = clauses.filter(value => value !== '');
     let sql = clauses.join(this.separator);
+    console.log({sql, params});
     
     return {sql, params};
   }

@@ -51,6 +51,7 @@ class Query extends Base {
    */
   createCommand(db) {
     const {sql, params} = db.getQueryBuilder().build(this);
+    
     return db.createCommand(sql, params);
   }
   
@@ -68,7 +69,7 @@ class Query extends Base {
   
   /**
    * @param {string|array|object|Expression|Map} columns
-   * @param {string} option
+   * @param {{}} option
    */
   select(columns, option) {
     this.rules['select'] = this.normalizeSelect(columns);
@@ -76,14 +77,14 @@ class Query extends Base {
   }
   
   normalizeSelect(columns) {
-
+  
     if (helper.instanceOf(columns,Expression)) {
       columns = [columns];
     } else if (typeof columns === 'string') {
       columns = columns.trim().split(/\s*,\s*/);
     }
     let select = {};
-    for (let key of columns) {
+    for (let key in columns) {
       let definition = columns[key];
       if (!Number.isFinite(key)) {
         select[key] = definition;
@@ -103,9 +104,9 @@ class Query extends Base {
           continue;
         }
       }
-      
       select[key] = definition;
     }
+    
     return select;
   }
   
