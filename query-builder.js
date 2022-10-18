@@ -26,7 +26,7 @@ class QueryBuilder {
     return builder.build(expression, params);
   }
   
-  buildSelect(columns, params, distinct, selectOption) {
+  buildSelect(columns, params, distinct, selectOption = '') {
     let select = 'SELECT';
     if (distinct) {
       select += ' DISTINCT';
@@ -47,8 +47,8 @@ class QueryBuilder {
       if (column === void 0) {
         continue;
       }
-      
-      if (helper.instanceOf(column, Expression)) {
+
+      /*if (helper.instanceOf(column, Expression)) {
         let sqlPart = this.buildExpression(column, params);
         if (Number.isFinite(key)) {
           result.push(sqlPart);
@@ -62,14 +62,14 @@ class QueryBuilder {
         let {sql, params} = this.build(column, params);
         result.push(`(${sql}) AS ` + this.db.quoteColumnName(key));
         continue;
-      }
+      }*/
 
       if (!Number.isFinite(key) && key !== column) {
         let sqlPart = String(column);
         if (column.indexOf('(') === -1) {
           sqlPart = this.db.quoteColumnName(column);
         }
-        result.push(`${sqlPart} AS ` + this.db.quoteColumnName(key));
+        result.push(sqlPart + ' AS ' + this.db.quoteColumnName(key));
         continue;
       }
       
@@ -100,6 +100,7 @@ class QueryBuilder {
       : helper.merge(parameters, query.params);
     
     let clauses = [];
+    
     clauses.push(
       this.buildSelect(
         query.getSelect(),

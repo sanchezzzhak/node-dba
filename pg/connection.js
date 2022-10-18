@@ -97,17 +97,17 @@ class PgConnection extends BaseConnection {
     
     const pool = new Pool(config);
     pool.on('connect', (client) => {
-      this.emit(this.EVENTS.EVENT_CONNECT, {client});
+      this.emit(this.EVENTS.CONNECT, {client});
     });
     pool.on('error', (err, client) => {
-      this.emit(this.EVENTS.EVENT_ERROR, {err, client});
+      this.emit(this.EVENTS.ERROR, {err, client});
     });
     this.#master = pool;
     
     try {
       let result = await pool.query('SELECT version()');
     } catch (err) {
-      this.emit(this.EVENTS.EVENT_ERROR, {err});
+      this.emit(this.EVENTS.ERROR, {err});
     }
     
     return new Promise((resolve, reject) => {

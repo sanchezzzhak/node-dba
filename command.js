@@ -54,6 +54,7 @@ class Command extends Base {
   constructor(config) {
     super(config);
     this.bindValues(config.params ?? {});
+    
   }
   
   bindValues(params) {

@@ -69,7 +69,7 @@ class Query extends Base {
   
   /**
    * @param {string|array|object|Expression|Map} columns
-   * @param {{}} option
+   * @param {string} option
    */
   select(columns, option) {
     this.rules['select'] = this.normalizeSelect(columns);
