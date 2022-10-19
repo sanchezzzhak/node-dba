@@ -77,17 +77,17 @@ class Query extends Base {
   }
   
   normalizeSelect(columns) {
-  
-    if (helper.instanceOf(columns,Expression)) {
+    
+    if (helper.instanceOf(columns, Expression)) {
       columns = [columns];
     } else if (typeof columns === 'string') {
       columns = columns.trim().split(/\s*,\s*/);
     }
-    let select = {};
+    
     for (let key in columns) {
       let definition = columns[key];
-      if (!Number.isFinite(key)) {
-        select[key] = definition;
+      if (/^\d+$/.test(key) === false) {
+        columns[key] = definition;
         continue;
       }
       if (typeof definition === 'string') {
@@ -96,18 +96,18 @@ class Query extends Base {
           match !== null &&
           /^\d+$/.test(match[2]) && match[2].indexOf('.') === -1
         ) {
-          select[match[2]] = match[1];
+          columns[match[1]] = match[2];
           continue;
         }
         if (definition.indexOf('(') === -1) {
-          select[definition] = definition;
+          columns[definition] = definition;
           continue;
         }
       }
-      select[key] = definition;
+      columns[key] = definition;
     }
     
-    return select;
+    return columns;
   }
   
   /**
@@ -137,7 +137,7 @@ class Query extends Base {
   }
   
   normalizeOrderBy(columns) {
-    if (helper.instanceOf(columns,Expression)) {
+    if (helper.instanceOf(columns, Expression)) {
       return [columns];
     }
     if (typeof columns === 'object') {

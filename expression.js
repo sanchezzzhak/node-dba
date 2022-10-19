@@ -18,3 +18,5 @@ class Expression extends Base
   }
   
 }
+
+module.exports = Expression;

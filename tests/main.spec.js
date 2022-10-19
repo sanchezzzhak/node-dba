@@ -25,7 +25,7 @@ describe('tests connections', function() {
   it('test query', async function() {
     let db = DBA.instance(PG);
     let query = new Query();
-    query.select(['pong']);
+    query.select(['test']);
     console.log( query.createCommand(db).getRawSql());
   });
   
