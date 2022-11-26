@@ -26,37 +26,41 @@ const Expression = require('./expression');
 // #indexBy;
 
 class Query extends Base {
-  
+
   rules = {};
   params = {};
-  
+
   /*** getter object methods */
-  
-  
+
+
+  getFrom() {
+    return this.rules['from'] ?? '';
+  }
+
   getSelect() {
     return this.rules['select'] ?? '';
   }
-  
+
   getSelectOption() {
     return this.rules['selectOption'] ?? '';
   }
-  
+
   getDistinct() {
     return Boolean(this.rules['distinct'] ?? false);
   }
-  
+
   /**
    * @param {BaseConnection} db
    * @return {Command}
    */
   createCommand(db) {
     const {sql, params} = db.getQueryBuilder().build(this);
-    
+
     return db.createCommand(sql, params);
   }
-  
+
   /*** setter object methods */
-  
+
   /**
    * Sets the value indicating whether to SELECT DISTINCT or not.
    * @param {boolean} stage
@@ -66,7 +70,7 @@ class Query extends Base {
     this.rules['distinct'] = Boolean(stage);
     return this;
   }
-  
+
   /**
    * @param {string|array|object|Expression|Map} columns
    * @param {string} option
@@ -74,16 +78,17 @@ class Query extends Base {
   select(columns, option) {
     this.rules['select'] = this.normalizeSelect(columns);
     this.rules['selectOption'] = option;
+    return this;
   }
-  
+
   normalizeSelect(columns) {
-    
+
     if (helper.instanceOf(columns, Expression)) {
       columns = [columns];
     } else if (typeof columns === 'string') {
       columns = columns.trim().split(/\s*,\s*/);
     }
-    
+
     for (let key in columns) {
       let definition = columns[key];
       if (/^\d+$/.test(key) === false) {
@@ -106,10 +111,10 @@ class Query extends Base {
       }
       columns[key] = definition;
     }
-    
+
     return columns;
   }
-  
+
   /**
    * Sets the LIMIT part of the query.
    * @param {number|Expression} limit
@@ -118,7 +123,7 @@ class Query extends Base {
     this.rules['limit'] = limit;
     return this;
   }
-  
+
   /**
    * Sets the OFFSET part of the query.
    * @param {number|Expression} offset
@@ -126,7 +131,7 @@ class Query extends Base {
   offset(offset) {
     this.rules['offset'] = offset;
   }
-  
+
   /**
    * Sets the OFFSET part of the query.
    * @param {string|object|Expression} columns
@@ -135,7 +140,7 @@ class Query extends Base {
     this.rules['orderBy'] = this.normalizeOrderBy(columns);
     return this;
   }
-  
+
   normalizeOrderBy(columns) {
     if (helper.instanceOf(columns, Expression)) {
       return [columns];
@@ -158,12 +163,12 @@ class Query extends Base {
     }
     throw new Error('Not support variable for `columns`');
   }
-  
+
   indexBy(column) {
     this.rules['indexBy'] = column;
     return this;
   }
-  
+
   adnWhere(condition) {
     if (this.rules['where'] === void 0) {
       this.rules['where'] = condition;
@@ -172,48 +177,66 @@ class Query extends Base {
     }
     return this;
   }
-  
+
   orWhere(condition) {
     if (this.rules['where'] === void 0) {
       this.rules['where'] = condition;
     } else {
       this.rules['where'] = ['or', this.rules['where'], condition];
     }
-    
+
     return this;
   }
-  
+
   all() {
   }
-  
+
+  /**
+   * @param {array|Expression|string} tables
+   */
+  from(tables) {
+
+    if (helper.instanceOf(tables, Expression)) {
+      tables = [tables];
+    }
+
+    if (typeof tables === 'string') {
+      tables = tables.trim().split(/\s*,\s*/).filter(val => val !=='');
+    }
+
+    this.rules['from'] = tables;
+
+    return this;
+  }
+
   one(db) {
     return this.createCommand(db).queryOne();
   }
-  
+
   scalar() {
   }
-  
+
   column() {
   }
-  
+
   count() {
   }
-  
+
   sum() {
   }
-  
+
   average() {
   }
-  
+
   min() {
   }
-  
+
   max() {
   }
-  
+
   exists() {
   }
-  
+
   /**
    *
    * @param {Query} query
@@ -225,7 +248,7 @@ class Query extends Base {
       params: query.params,
     });
   }
-  
+
 }
 
 module.exports = Query;

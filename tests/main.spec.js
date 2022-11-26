@@ -25,8 +25,11 @@ describe('tests connections', function() {
   it('test query', async function() {
     let db = DBA.instance(PG);
     let query = new Query();
-    query.select(['test']);
+    query.select(['test']).from('customer');
+    expect(db.constructor.getDriverName).to.equal('pg');
     console.log( query.createCommand(db).getRawSql());
   });
-  
+
+
+
 });

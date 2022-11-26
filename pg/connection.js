@@ -45,7 +45,7 @@ class PgConnection extends BaseConnection {
   }
   
   /**
-   *
+   * Connect to master or slave+master
    * @returns {Promise<void>}
    */
   async connect() {
@@ -64,11 +64,20 @@ class PgConnection extends BaseConnection {
     
     this.#master = await this.createPool(this.#config);
   }
-  
+
+  /**
+   * Disconnect for current master or slave+master
+   * @returns {Promise<void>}
+   */
   async disconnect(){
     await this.closePool(this.#master);
   }
-  
+
+  /**
+   * Close pool connection
+   * @param pool
+   * @returns {Promise<*>}
+   */
   async closePool(pool) {
     if (!pool) {
       return;
@@ -122,7 +131,11 @@ class PgConnection extends BaseConnection {
       })
     })
   }
-  
+
+  /**
+   * get Schema component
+   * @returns {Schema}
+   */
   getSchema() {
     return new Schema({
       db: this
