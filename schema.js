@@ -82,13 +82,13 @@ class Schema extends Base
    * @returns {{mac}|*}
    */
   quoteTableName(name) {
-    if(/^\(.+\)$/.test(name) || name.indexOf('{{') !== -1 ){
+
+    if(/^\(.+\)$/.test(name) || name.indexOf('{{') !== -1){
       return name;
     }
     if (name.indexOf('.') === -1) {
       return this.quoteSimpleTableName(name);
     }
-
     let parts = this.getTableNameParts(name);
     for(let key in parts) {
       parts[key] = this.quoteSimpleTableName(parts[key]);

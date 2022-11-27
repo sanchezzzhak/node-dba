@@ -4,9 +4,9 @@ const ExpressionBuilder = require('./expression-builder');
 const Query = require('./query');
 
 class QueryBuilder {
-  /*** @type {Connection|PgConnection} db - the database connection */
+  /*** @type db {Connection|PgConnection} - the database connection */
   db;
-  /*** @type {string} - the separator between different fragments of a SQL statement. */
+  /*** @type separator {string} - the separator between different fragments of a SQL statement. */
   separator = ' ';
 
   conditionBuilders = [];
@@ -43,8 +43,8 @@ class QueryBuilder {
   }
 
   /**
-   *
-   * @param tables
+   * Quotes table names passed.
+   * @param {array} tables
    * @param params
    * @returns {*}
    * @todo added expresion.build
@@ -53,17 +53,47 @@ class QueryBuilder {
     for(let i in tables) {
       let table = tables[i];
 
+
+
       if (helper.instanceOf(table, Query)){
         let {sql, params} = this.build(table, params)
         tables[i]= '(' + sql + ') ' + this.db.quoteTableName(i);
-      } else if (typeof table === 'string') {
+        continue;
+      }
+
+      if (typeof table === 'string' && /^\d+$/.test(i) === false && i !== table ) {
         if (table.indexOf('(') === -1){
           table =  this.db.quoteTableName(table);
         }
         tables[i]= table + ' ' + this.db.quoteTableName(i);
+        continue;
       }
+
+      if (table.indexOf('(') === -1){
+        let tableWithAlias = this.extractAlias(table);
+        if (tableWithAlias !== null) {
+          tables[i] = this.db.quoteTableName(tableWithAlias[1]) + ' ' + this.db.quoteTableName(tableWithAlias[1]);
+        } else {
+          tables[i] = this.db.quoteTableName(table);
+        }
+      }
+
     }
     return tables;
+  }
+
+  /**
+   * Extracts table alias if there is one or returns null
+   *
+   * @param table
+   * @returns {array|null}
+   */
+  extractAlias(table) {
+    let matches = [...table.matchAll('/^(.*?)(?:\s+as|)\s+([^ ]+)$/i')];
+    if (matches.length) {
+      return matches;
+    }
+    return null;
   }
 
   /**
