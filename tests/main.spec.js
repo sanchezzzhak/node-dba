@@ -1,6 +1,5 @@
 const {should, assert, expect} = require('chai');
-const DBA = require('../index');
-const Query = require('../query');
+const {DBA, Query} = require('../index');
 
 DBA.loadConfigsForDir(__dirname + '/config/db');
 

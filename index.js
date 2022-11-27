@@ -1,5 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const Query = require('./query');
 
 const SUPPORT_DRIVERS = [
   'pg',
@@ -70,4 +71,7 @@ class DBA {
   
 }
 
-module.exports = DBA;
+module.exports = {
+  DBA,
+  Query
+};

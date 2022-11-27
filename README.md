@@ -21,16 +21,23 @@ save the config to any folder for example `config/local/db/pg.js`
 #### Base usage
 
 ```js
-const dba = require('node-dba');
+const {DBA} = require('node-dba');
 // init all configs for dir
-dba.loadConfigsForDir(__dirname + '/config/local/db');
+DBA.loadConfigsForDir(__dirname + '/config/local/db');
 // ...
 // get db connect
-const db = dba.instance('pg');
+const db = DBA.instance('pg');
+```
 
+#### Query Builder
+```js
+const {DBA, Query} = require('node-dba');
+const db = DBA.instance('pg');
+const query = new Query();
 
-
-
+let result = await query.select(['id', 'name'])
+.from('users')
+.all(db)
 ```
 
 #### Migration usage
