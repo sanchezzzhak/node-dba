@@ -80,6 +80,20 @@ class Query extends Base {
     return this;
   }
 
+  /**
+   * @param {string|array|object|Expression|Map} columns
+   * @param columns
+   * @returns {Query}
+   */
+  addSelect(columns) {
+    if (!this.rules['select']) {
+      this.rules['select'] = this.normalizeSelect(columns);
+    } else {
+      this.rules['select'] = {...this.rules['select'], ...this.normalizeSelect(columns)};
+    }
+    return this;
+  }
+
   normalizeSelect(columns) {
 
     if (helper.instanceOf(columns, Expression)) {
@@ -201,7 +215,7 @@ class Query extends Base {
     }
 
     if (typeof tables === 'string') {
-      tables = tables.trim().split(/\s*,\s*/).filter(val => val !=='');
+      tables = tables.trim().split(/\s*,\s*/).filter(val => val !== '');
     }
 
     this.rules['from'] = tables;
