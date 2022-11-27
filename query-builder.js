@@ -90,7 +90,6 @@ class QueryBuilder {
     }
 
     let result = [];
-
     for (let key in columns) {
       let column = columns[key];
       if (column === void 0) {
@@ -106,13 +105,11 @@ class QueryBuilder {
         }
         continue;
       }
-
       if (helper.instanceOf(column, Query)) {
         let {sql, params} = this.build(column, params);
         result.push(`(${sql}) AS ` + this.db.quoteColumnName(key));
         continue;
       }
-
       if (/^\d+$/.test(key) === false && key !== column) {
         let sqlPart = String(column);
         if (column.indexOf('(') === -1) {
@@ -162,8 +159,6 @@ class QueryBuilder {
     );
     clauses = clauses.filter(value => value !== '');
     let sql = clauses.join(this.separator);
-    console.log({sql, params});
-
     return {sql, params};
   }
 

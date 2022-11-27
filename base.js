@@ -4,6 +4,7 @@ class Base extends EventEmitter {
   
   constructor(config = {}) {
     super();
+    this.setOwnProperties(config)
   }
   
   /**

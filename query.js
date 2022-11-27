@@ -55,7 +55,6 @@ class Query extends Base {
    */
   createCommand(db) {
     const {sql, params} = db.getQueryBuilder().build(this);
-
     return db.createCommand(sql, params);
   }
 
@@ -89,10 +88,11 @@ class Query extends Base {
       columns = columns.trim().split(/\s*,\s*/);
     }
 
+    let result = {};
     for (let key in columns) {
       let definition = columns[key];
       if (/^\d+$/.test(key) === false) {
-        columns[key] = definition;
+        result[key] = definition;
         continue;
       }
       if (typeof definition === 'string') {
@@ -101,18 +101,18 @@ class Query extends Base {
           match !== null &&
           /^\d+$/.test(match[2]) && match[2].indexOf('.') === -1
         ) {
-          columns[match[1]] = match[2];
+          result[match[1]] = match[2];
           continue;
         }
         if (definition.indexOf('(') === -1) {
-          columns[definition] = definition;
+          result[definition] = definition;
           continue;
         }
       }
-      columns[key] = definition;
+      result[key] = definition;
     }
 
-    return columns;
+    return result;
   }
 
   /**

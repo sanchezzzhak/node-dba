@@ -22,12 +22,15 @@ describe('tests connections', function() {
     expect(db.constructor.getDriverName).to.equal('pg');
   });
   
-  it('test query', async function() {
+  it('test query', function () {
     let db = DBA.instance(PG);
     let query = new Query();
-    query.select(['test']).from('customer');
+    query.select(['column1', 'column2']).from('customer');
     expect(db.constructor.getDriverName).to.equal('pg');
-    console.log( query.createCommand(db).getRawSql());
+    let sql = query.createCommand(db).getRawSql();
+    console.log({sql});
+
+    expect('SELECT "column1", "column2" FROM "customer"').to.equal(sql);
   });
 
 
