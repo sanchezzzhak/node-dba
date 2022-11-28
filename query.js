@@ -28,13 +28,20 @@ const Expression = require('./expression');
 class Query extends Base {
 
   rules = {};
-  params = {};
 
   /*** getter object methods */
 
 
   getFrom() {
     return this.rules['from'] ?? '';
+  }
+
+  getWhere(){
+    return this.rules['where'] ?? '';
+  }
+
+  getParams() {
+    return this.rules['params'] ?? {};
   }
 
   getSelect() {
@@ -71,6 +78,7 @@ class Query extends Base {
   }
 
   /**
+   * Sets the SELECT part of the query.
    * @param {string|array|object|Expression|Map} columns
    * @param {string} option
    */
@@ -81,21 +89,26 @@ class Query extends Base {
   }
 
   /**
+   * Add more columns to the SELECT part of the query.
    * @param {string|array|object|Expression|Map} columns
-   * @param columns
    * @returns {Query}
    */
   addSelect(columns) {
-    if (!this.rules['select']) {
+    if (this.rules['select'] == void 0) {
       this.rules['select'] = this.normalizeSelect(columns);
     } else {
       this.rules['select'] = {...this.rules['select'], ...this.normalizeSelect(columns)};
     }
+
     return this;
   }
 
+  /**
+   * Normalizes the SELECT columns passed to [[select()]] or [[addSelect()]]
+   * @param {string|array|object|Expression|Map} columns
+   * @returns {{}}
+   */
   normalizeSelect(columns) {
-
     if (helper.instanceOf(columns, Expression)) {
       columns = [columns];
     } else if (typeof columns === 'string') {
@@ -104,29 +117,52 @@ class Query extends Base {
 
     let result = {};
     for (let key in columns) {
-      let definition = columns[key];
-      if (/^\d+$/.test(key) === false) {
-        result[key] = definition;
+      let column = columns[key];
+      if (helper.isNumber(key) === false) {
+        result[key] = column;
         continue;
       }
-      if (typeof definition === 'string') {
-        let match = /^(.*?)(?:\s+as\s+|\s+)([\w.-]+)$/.exec(definition);
-        if (
-          match !== null &&
-          /^\d+$/.test(match[2]) && match[2].indexOf('.') === -1
-        ) {
-          result[match[1]] = match[2];
+      if (typeof column === 'string') {
+        let match = /^(.*?)(?:\s+as\s+|\s+)([\w\-_\.]+)$/i.exec(column);
+        if (match !== null && !helper.isNumber(match[2]) && match[2].indexOf('.') === -1) {
+          result[match[2]] = match[1];
           continue;
         }
-        if (definition.indexOf('(') === -1) {
-          result[definition] = definition;
+        if (column.indexOf('(') === -1) {
+          result[column] = column;
           continue;
         }
       }
-      result[key] = definition;
+      result[key] = column;
     }
 
     return result;
+  }
+
+  /**
+   * Sets the parameters to be bound to the query.
+   * @param params
+   * @returns {Query}
+   */
+  params(params) {
+    this.rules['params'] = params;
+    return this;
+  }
+
+  /**
+   * Adds additional parameters to be bound to the query.
+   * @param params
+   */
+  addParams(params) {
+    if (helper.empty(params)) {
+      return this;
+    }
+    if (helper.empty(this.rules['params'])) {
+      this.rules['params'] = params;
+    } else {
+      this.rules['params'] = {...this.rules['params'], ...params};
+    }
+    return this;
   }
 
   /**
@@ -166,9 +202,9 @@ class Query extends Base {
       let result = {};
       let partColumns = columns.trim().split(/\s*,\s*/);
       for (let column of partColumns) {
-        let match = /^(.*?)\s+(asc|desc)$/i.exec(column);
+        let match = /^(.*?)\s+((?:a|de)sc)$/i.exec(column);
         if (match !== null) {
-          result[match[1]] = match[2].indexOf('desc') !== -1 ? 'DESC' : 'ASC';
+          result[match[1]] = String(match[2]).toLowerCase().indexOf('desc') !== -1 ? 'DESC' : 'ASC';
           continue;
         }
         result[column] = 'ASC';
@@ -183,33 +219,45 @@ class Query extends Base {
     return this;
   }
 
-  adnWhere(condition) {
+  where(condition, params) {
+    this.rules['where'] = condition;
+    this.addParams(params);
+  }
+
+  andWhere(condition, params) {
     if (this.rules['where'] === void 0) {
       this.rules['where'] = condition;
+    } else if (
+      Array.isArray(this.rules['where']) &&
+      this.rules['where'][0] &&
+      String(this.rules['where'][0]).toLowerCase() === 'and'
+    ) {
+      this.rules['where'].push(condition);
     } else {
       this.rules['where'] = ['and', this.rules['where'], condition];
     }
+    this.addParams(params);
     return this;
   }
 
-  orWhere(condition) {
+  orWhere(condition, params) {
     if (this.rules['where'] === void 0) {
       this.rules['where'] = condition;
     } else {
       this.rules['where'] = ['or', this.rules['where'], condition];
     }
-
+    this.addParams(params);
     return this;
   }
 
   all() {
   }
 
+
   /**
    * @param {array|Expression|string} tables
    */
   from(tables) {
-
     if (helper.instanceOf(tables, Expression)) {
       tables = [tables];
     }
@@ -217,9 +265,7 @@ class Query extends Base {
     if (typeof tables === 'string') {
       tables = tables.trim().split(/\s*,\s*/).filter(val => val !== '');
     }
-
     this.rules['from'] = tables;
-
     return this;
   }
 

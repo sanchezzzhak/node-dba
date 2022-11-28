@@ -33,13 +33,42 @@ class QueryBuilder {
   /**
    * generate from part sql
    */
-  buildFrom(tables, params){
+  buildFrom(tables, params) {
     if (helper.empty(tables)) {
       return '';
     }
 
     tables = this.quoteTableNames(tables, params);
     return 'FROM ' + tables.join(', ');
+  }
+
+  buildWhere(condition, params) {
+    let where = this.buildCondition(condition, params);
+    return where === '' ? '' : 'WHERE ' + where;
+  }
+
+  /**
+   * Creates a condition based on column-value pairs.
+   * @param {array} condition
+   * @param {{}} params
+   * @returns {string|*}
+   */
+  buildCondition(condition, params) {
+    if(helper.empty(condition)) {
+      return '';
+    }
+    // todo added later
+    // condition = this.createConditionFromArray(condition);
+
+    if (helper.instanceOf(condition, Expression)) {
+      return this.buildExpression(condition, params);
+    }
+
+    return String(condition);
+  }
+
+  createConditionFromArray(condition) {
+
   }
 
   /**
@@ -50,26 +79,25 @@ class QueryBuilder {
    * @todo added expresion.build
    */
   quoteTableNames(tables, params) {
-    for(let i in tables) {
+    for (let i in tables) {
       let table = tables[i];
 
 
-
-      if (helper.instanceOf(table, Query)){
+      if (helper.instanceOf(table, Query)) {
         let {sql, params} = this.build(table, params)
-        tables[i]= '(' + sql + ') ' + this.db.quoteTableName(i);
+        tables[i] = '(' + sql + ') ' + this.db.quoteTableName(i);
         continue;
       }
 
-      if (typeof table === 'string' && /^\d+$/.test(i) === false && i !== table ) {
-        if (table.indexOf('(') === -1){
-          table =  this.db.quoteTableName(table);
+      if (typeof table === 'string' && /^\d+$/.test(i) === false && i !== table) {
+        if (table.indexOf('(') === -1) {
+          table = this.db.quoteTableName(table);
         }
-        tables[i]= table + ' ' + this.db.quoteTableName(i);
+        tables[i] = table + ' ' + this.db.quoteTableName(i);
         continue;
       }
 
-      if (table.indexOf('(') === -1){
+      if (table.indexOf('(') === -1) {
         let tableWithAlias = this.extractAlias(table);
         if (tableWithAlias !== null) {
           tables[i] = this.db.quoteTableName(tableWithAlias[1]) + ' ' + this.db.quoteTableName(tableWithAlias[1]);
@@ -172,8 +200,8 @@ class QueryBuilder {
    */
   build(query, parameters = {}) {
     let params = helper.empty(parameters)
-      ? query.params
-      : helper.merge(parameters, query.params);
+      ? query.getParams()
+      : helper.merge(parameters, query.getParams());
 
     let clauses = [];
 
@@ -185,7 +213,8 @@ class QueryBuilder {
         query.getSelectOption(),
       ),
       this.buildFrom(query.getFrom(), params),
-
+      //buildJoin
+      this.buildWhere(query.getWhere(), params),
     );
     clauses = clauses.filter(value => value !== '');
     let sql = clauses.join(this.separator);

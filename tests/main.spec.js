@@ -1,5 +1,5 @@
 const {should, assert, expect} = require('chai');
-const {DBA, Query} = require('../index');
+const {DBA, Query, Expression} = require('../index');
 
 DBA.loadConfigsForDir(__dirname + '/config/db');
 
@@ -32,7 +32,7 @@ describe('tests connections', function () {
     expect('SELECT "column1", "column2" FROM "customer"').to.equal(sql);
   });
 
-  it('test select all for Query', function () {
+  it('test select * for Query', function () {
     let query = new Query();
     query.select('*');
     expect({'*': '*'}).to.deep.equal(query.getSelect());
@@ -52,6 +52,12 @@ describe('tests connections', function () {
     let query = new Query();
     query.addSelect('email');
     expect({'email': 'email'}).to.deep.equal(query.getSelect());
+
+    query = new Query();
+    query.addSelect(['*', 'abc']);
+    query.addSelect(['*', 'bca']);
+    expect({'*': '*', 'abc': 'abc', 'bca': 'bca'}).to.deep.equal(query.getSelect());
+
   })
 
   it('test select + addSelect for Query', function () {
@@ -60,6 +66,70 @@ describe('tests connections', function () {
     query.addSelect('email');
     expect({'id': 'id', 'name': 'name', 'email': 'email'}).to.deep.equal(query.getSelect());
   })
+
+  it('test select alias for Query', function () {
+    let query = new Query();
+    query.addSelect(['field1 as a', 'field 1 as b']);
+    expect({'a': 'field1', 'b': 'field 1'}).to.deep.equal(query.getSelect());
+
+    query = new Query();
+    query.addSelect(['field1 a', 'field 1 b']);
+    expect({'a': 'field1', 'b': 'field 1'}).to.deep.equal(query.getSelect());
+
+    query = new Query();
+    query.select('name, name, name as X, name as X');
+    expect({'name': 'name', 'X': 'name'}).to.deep.equal(query.getSelect());
+
+    query = (new Query()).select('id');
+    expect({'id': 'id'}).to.deep.equal(query.getSelect());
+    query.select(['id', 'brand_id']);
+    expect({'id': 'id', 'brand_id': 'brand_id'}).to.deep.equal(query.getSelect());
+  })
+
+  it('test select function for Query', function () {
+    let query = (new Query()).select({
+      'prefix': 'LEFT(name, 7)',
+      'prefix_key': 'LEFT(name, 7)'
+    });
+    query.addSelect(['LEFT(name,8) as test']);
+    expect({
+      'prefix': 'LEFT(name, 7)',
+      'prefix_key': 'LEFT(name, 7)',
+      'test': 'LEFT(name,8)',
+    }).to.deep.equal(query.getSelect());
+  });
+
+  it('test from Expression', function () {
+    let query = new Query();
+    let tables = new Expression('(SELECT id,name FROM user) u');
+    query.from(tables);
+    assert.instanceOf(query.getFrom()[0], Expression);
+  })
+
+  it('test from for Query', function () {
+    let query = new Query();
+    query.from('user');
+    expect(['user']).to.deep.equal(query.getFrom());
+
+    query = new Query();
+    query.from('user as u');
+    expect(['user as u']).to.deep.equal(query.getFrom());
+  })
+
+  it('test where for Query', function () {
+    let query = new Query();
+    query.where('id = :id', {':id': 1});
+    expect({':id': 1}).to.deep.equal(query.getParams());
+    expect('id = :id').equal(query.getWhere());
+
+    query.andWhere('name = :name', {':name': 'something'});
+    expect({':id': 1, ':name': 'something'}).to.deep.equal(query.getParams());
+    expect(['and', 'id = :id', 'name = :name']).to.deep.equal(query.getWhere());
+
+    query.orWhere('age = :age', {':age': '33'})
+    expect({':id': 1, ':name': 'something', ':age': '33'}).to.deep.equal(query.getParams());
+    expect(['or', ['and', 'id = :id', 'name = :name'], 'age = :age']).to.deep.equal(query.getWhere());
+  });
 
 
 });

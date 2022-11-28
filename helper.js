@@ -33,6 +33,10 @@ exports.instanceOf = function(obj, right) {
     right);
 };
 
+exports.isNumber = function(key) {
+  return /^\d+$/.test(key);
+}
+
 exports.isset = function(obj) {
   return !(typeof obj === 'undefined' || obj === null || obj.length === 0);
 };
