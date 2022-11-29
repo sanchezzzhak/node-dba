@@ -5,8 +5,10 @@ const Query = require('./query');
 const SimpleCondition = require('./conditions/simple-condition');
 const HashCondition = require('./conditions/simple-condition');
 const ConjunctionCondition = require('./conditions/conjunction-condition');
+const ExistsCondition = require('./conditions/exists-condition');
 
 const ConjunctionConditionBuilder = require('./builders/conjunction-condition-builder');
+const ExistsConditionBuilder = require('./builders/exists-condition-builder');
 
 class QueryBuilder {
   /*** @type db {Connection|PgConnection} - the database connection */
@@ -28,7 +30,8 @@ class QueryBuilder {
 
   getDefaultExpressionBuilderMap() {
     return {
-      'ConjunctionCondition': ConjunctionConditionBuilder
+      'ConjunctionCondition': ConjunctionConditionBuilder,
+      'ExistsCondition': ExistsConditionBuilder
     }
   }
 
@@ -36,6 +39,8 @@ class QueryBuilder {
     return {
       'AND': ConjunctionCondition,
       'OR': ConjunctionCondition,
+      'NOT EXISTS': ExistsCondition,
+      'EXISTS': ExistsCondition,
     }
   }
 
