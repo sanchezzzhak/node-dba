@@ -1,6 +1,7 @@
 const Base = require('./base');
 
 class ExpressionBuilder extends Base {
+
   /** @type {QueryBuilder} */
   queryBuilder;
   

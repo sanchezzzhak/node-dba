@@ -2,18 +2,34 @@ const helper = require('./helper');
 const Expression = require('./expression');
 const ExpressionBuilder = require('./expression-builder');
 const Query = require('./query');
-const SimpleCondition = require('./conditions/simple-condition');
-const HashCondition = require('./conditions/simple-condition');
-const ConjunctionCondition = require('./conditions/conjunction-condition');
-const ExistsCondition = require('./conditions/exists-condition');
 
-const ConjunctionConditionBuilder = require('./builders/conjunction-condition-builder');
-const ExistsConditionBuilder = require('./builders/exists-condition-builder');
+const {
+  SimpleCondition,
+  HashCondition,
+  ConjunctionCondition,
+  ExistsCondition,
+  NotCondition,
+  BetweenCondition
+} = require('./conditions');
+
+const {
+  QueryExpressionBuilder,
+  SimpleConditionBuilder,
+  ConjunctionConditionBuilder,
+  ExistsConditionBuilder,
+  NotConditionBuilder
+} = require('./builders');
+
+const PARAM_PREFIX = ':qp';
 
 class QueryBuilder {
-  /*** @type db {Connection|PgConnection} - the database connection */
+  /**
+   * @type {Connection|PgConnection} - the database connection
+   **/
   db;
-  /*** @type separator {string} - the separator between different fragments of a SQL statement. */
+  /**
+   * @type {string} - the separator between different fragments of a SQL statement.
+   */
   separator = ' ';
 
   conditionMap = {};
@@ -30,17 +46,23 @@ class QueryBuilder {
 
   getDefaultExpressionBuilderMap() {
     return {
+      'Query': QueryExpressionBuilder,
       'ConjunctionCondition': ConjunctionConditionBuilder,
-      'ExistsCondition': ExistsConditionBuilder
+      'ExistsCondition': ExistsConditionBuilder,
+      'NotCondition': NotConditionBuilder,
+      'SimpleCondition': SimpleConditionBuilder
     }
   }
 
-  getDefaultConditionMap(){
+  getDefaultConditionMap() {
     return {
       'AND': ConjunctionCondition,
       'OR': ConjunctionCondition,
       'NOT EXISTS': ExistsCondition,
       'EXISTS': ExistsCondition,
+      'NOT': NotCondition,
+      'BETWEEN': BetweenCondition,
+      'NOT BETWEEN': BetweenCondition,
     }
   }
 
@@ -51,7 +73,7 @@ class QueryBuilder {
    */
   getExpressionBuilder(expresion) {
     let className = helper.className(expresion);
-    if (this.expressionBuilderMap[className] !== void 0){
+    if (this.expressionBuilderMap[className] !== void 0) {
       return new (this.expressionBuilderMap[className])(this);
     }
     return new ExpressionBuilder(this);
@@ -168,7 +190,7 @@ class QueryBuilder {
   }
 
   /**
-   * generate select part sql
+   * Generate select part sql
    *
    * @param columns
    * @param params
@@ -238,6 +260,7 @@ class QueryBuilder {
 
   /***
    * Generates a SELECT SQL statement from a {Query} object.
+   *
    * @param {Query} query
    * @param {object} parameters
    */
@@ -262,6 +285,20 @@ class QueryBuilder {
     clauses = clauses.filter(value => value !== '');
     let sql = clauses.join(this.separator);
     return {sql, params};
+  }
+
+  /**
+   * Helper method to add value to params array using [[PARAM_PREFIX]]
+   * return placeholder name
+   *
+   * @param value
+   * @param {{}} params - passed by reference
+   * @returns {string}
+   */
+  bindParam(value, params) {
+    let placeholderName = PARAM_PREFIX + params.length;
+    params[placeholderName] = value;
+    return placeholderName;
   }
 
 }
