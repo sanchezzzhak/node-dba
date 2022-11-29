@@ -5,9 +5,8 @@ class ExpressionBuilder extends Base {
   queryBuilder;
   
   constructor(queryBuilder) {
-    super({
-      queryBuilder: queryBuilder,
-    });
+    super();
+    this.queryBuilder = queryBuilder;
   }
   
   /**
@@ -21,3 +20,5 @@ class ExpressionBuilder extends Base {
   }
   
 }
+
+module.exports = ExpressionBuilder;

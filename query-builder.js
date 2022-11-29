@@ -2,6 +2,11 @@ const helper = require('./helper');
 const Expression = require('./expression');
 const ExpressionBuilder = require('./expression-builder');
 const Query = require('./query');
+const SimpleCondition = require('./conditions/simple-condition');
+const HashCondition = require('./conditions/simple-condition');
+const ConjunctionCondition = require('./conditions/conjunction-condition');
+
+const ConjunctionConditionBuilder = require('./builders/conjunction-condition-builder');
 
 class QueryBuilder {
   /*** @type db {Connection|PgConnection} - the database connection */
@@ -9,22 +14,49 @@ class QueryBuilder {
   /*** @type separator {string} - the separator between different fragments of a SQL statement. */
   separator = ' ';
 
-  conditionBuilders = [];
-  conditionObjects = [];
-  expressionBuilders = [];
+  conditionMap = {};
+  expressionBuilderMap = {}
 
   /**
-   *
    * @param db {Connection|PgConnection}
    */
   constructor(db) {
     this.db = db;
+    this.conditionMap = {...this.getDefaultConditionMap(), ...this.conditionMap};
+    this.expressionBuilderMap = {...this.getDefaultExpressionBuilderMap(), ...this.expressionBuilderMap};
   }
 
+  getDefaultExpressionBuilderMap() {
+    return {
+      'ConjunctionCondition': ConjunctionConditionBuilder
+    }
+  }
+
+  getDefaultConditionMap(){
+    return {
+      'AND': ConjunctionCondition,
+      'OR': ConjunctionCondition,
+    }
+  }
+
+  /**
+   * find builder for map or create ExpressionBuilder
+   * @param expresion
+   * @returns {ExpressionBuilder}
+   */
   getExpressionBuilder(expresion) {
-    return ExpressionBuilder(this);
+    let className = helper.className(expresion);
+    if (this.expressionBuilderMap[className] !== void 0){
+      return new (this.expressionBuilderMap[className])(this);
+    }
+    return new ExpressionBuilder(this);
   }
 
+  /**
+   * @param {Expression|Object} expression
+   * @param {{}} params
+   * @returns {string}
+   */
   buildExpression(expression, params = {}) {
     const builder = this.getExpressionBuilder(expression);
     return builder.build(expression, params);
@@ -44,22 +76,21 @@ class QueryBuilder {
 
   buildWhere(condition, params) {
     let where = this.buildCondition(condition, params);
-    return where === '' ? '' : 'WHERE ' + where;
+    return (where === '' || where === void 0) ? '' : 'WHERE ' + where;
   }
 
   /**
    * Creates a condition based on column-value pairs.
-   * @param {array} condition
+   * @param {array|Object} condition
    * @param {{}} params
    * @returns {string|*}
    */
   buildCondition(condition, params) {
-    if(helper.empty(condition)) {
+
+    if (helper.empty(condition)) {
       return '';
     }
-    // todo added later
-    // condition = this.createConditionFromArray(condition);
-
+    condition = this.createConditionFromArray(condition);
     if (helper.instanceOf(condition, Expression)) {
       return this.buildExpression(condition, params);
     }
@@ -68,7 +99,14 @@ class QueryBuilder {
   }
 
   createConditionFromArray(condition) {
+    if (Array.isArray(condition) && helper.isset(condition[0])) {
+      let operator = condition.shift().toUpperCase();
+      return (helper.isset(this.conditionMap[operator])
+        ? new this.conditionMap[operator](operator, condition)
+        : new SimpleCondition(operator, condition));
+    }
 
+    return new HashCondition(condition);
   }
 
   /**

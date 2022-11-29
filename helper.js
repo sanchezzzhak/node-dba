@@ -46,6 +46,18 @@ exports.strncmp = function(str, search, pos) {
 };
 
 /**
+ *
+ * @param {Object} obj
+ * @returns {null|string}
+ */
+exports.className = function (obj) {
+  if (typeof obj === 'object') {
+    return obj.constructor.name;
+  }
+  return null;
+}
+
+/**
  * compare arrays a with b and get everything in b
  * @param a
  * @param b

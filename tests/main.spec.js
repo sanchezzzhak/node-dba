@@ -129,6 +129,12 @@ describe('tests connections', function () {
     query.orWhere('age = :age', {':age': '33'})
     expect({':id': 1, ':name': 'something', ':age': '33'}).to.deep.equal(query.getParams());
     expect(['or', ['and', 'id = :id', 'name = :name'], 'age = :age']).to.deep.equal(query.getWhere());
+
+    query.from(['profiles'])
+
+    let db = DBA.instance(PG);
+    console.log(query.createCommand(db).getRawSql());
+
   });
 
 
