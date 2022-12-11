@@ -106,6 +106,34 @@ class QueryBuilder {
     return (where === '' || where === void 0) ? '' : 'WHERE ' + where;
   }
 
+  buildGroupBy(columns) {
+    if (helper.empty(columns)) {
+      return '';
+    }
+
+    let result = [];
+    for (let key in columns) {
+      let column = columns[key];
+      if (column === void 0) {
+        continue;
+      }
+
+      if (helper.instanceOf(column, Expression)) {
+        let sqlPart = this.buildExpression(column);
+        result.push(sqlPart);
+      } else {
+        result.push(this.db.quoteColumnName(column));
+      }
+    }
+
+    return 'GROUP BY ' + result.join(', ');
+  }
+
+  buildHaving(condition, params) {
+    let having = this.buildCondition(condition, params);
+    return (having === '' || having === void 0) ? '' : 'HAVING ' + having;
+  }
+
   /**
    * Creates a condition based on column-value pairs.
    * @param {array|Object} condition
@@ -281,6 +309,8 @@ class QueryBuilder {
       this.buildFrom(query.getFrom(), params),
       //buildJoin
       this.buildWhere(query.getWhere(), params),
+      this.buildGroupBy(query.getGroupBy()),
+      this.buildHaving(query.getHaving(), params),
     );
     clauses = clauses.filter(value => value !== '');
     let sql = clauses.join(this.separator);

@@ -139,18 +139,19 @@ describe('tests connections', function () {
 
   it('test filter hash where for Query', function () {
     let query = new Query();
+    let condition = {id: 0};
     query.filterWhere({
       'id': 0,
       'title': '   ',
       'author_ids': [],
     });
-    expect({'id': 0}).to.deep.equal(query.getWhere());
+    expect(condition).to.deep.equal(query.getWhere());
 
     query.andFilterWhere({'status': null});
-    expect({'id': 0}).to.deep.equal(query.getWhere());
+    expect(condition).to.deep.equal(query.getWhere());
 
     query.orFilterWhere({'name': '', hello: void 0});
-    expect({'id': 0}).to.deep.equal(query.getWhere());
+    expect(condition).to.deep.equal(query.getWhere());
   })
 
   it('test filter array where for Query', function () {
@@ -186,13 +187,75 @@ describe('tests connections', function () {
     expect(condition).to.deep.equal(query.getWhere());
   })
 
-  it('test filter having for Query', function() {
+  it('test filter having hash for Query', function () {
     let query = new Query();
+    let condition = {id: 0};
     query.filterHaving({
       'id': 0,
+      'title': '   ',
+      'author_ids': [],
     });
-    expect({'id': 0}).to.deep.equal(query.getHaving());
+    expect(condition).to.deep.equal(query.getHaving());
+
+    query.andFilterHaving({'status': null});
+    expect(condition).to.deep.equal(query.getHaving());
+
+    query.orFilterHaving({'name': ''});
+    expect(condition).to.deep.equal(query.getHaving());
   })
+
+  it('test filter having for Query', function () {
+    let query = new Query();
+    let condition = {'id': 0};
+    query.filterHaving(condition);
+    expect(condition).to.deep.equal(query.getHaving());
+
+    query.andFilterHaving(['between', 'id', null, null]);
+    expect(condition).to.deep.equal(query.getHaving());
+
+    query.orFilterHaving(['not between', 'id', null, null]);
+    expect(condition).to.deep.equal(query.getHaving());
+
+    query.andFilterHaving(['in', 'id', []]);
+    expect(condition).to.deep.equal(query.getHaving());
+
+    query.andFilterHaving(['not in', 'id', []]);
+    expect(condition).to.deep.equal(query.getHaving());
+
+    query.andFilterHaving(['like', 'id', '']);
+    expect(condition).to.deep.equal(query.getHaving());
+
+    query.andFilterHaving(['or like', 'id', '']);
+    expect(condition).to.deep.equal(query.getHaving());
+
+    query.andFilterHaving(['not like', 'id', '   ']);
+    expect(condition).to.deep.equal(query.getHaving());
+
+    query.andFilterHaving(['or not like', 'id', null]);
+    expect(condition).to.deep.equal(query.getHaving());
+
+    query.andFilterHaving(['or', ['eq', 'id', null], ['eq', 'id', []]]);
+    expect(condition).to.deep.equal(query.getHaving());
+  })
+
+  it('test group for Query', function() {
+    let query = new Query();
+    query.select('*').from('users')
+
+    query.groupBy('team');
+    expect(['team']).to.deep.equal(query.getGroupBy());
+
+    query.addGroupBy(['company']);
+    expect(['team', 'company']).to.deep.equal(query.getGroupBy());
+
+    query.addGroupBy('age');
+    expect(['team', 'company', 'age']).to.deep.equal(query.getGroupBy());
+
+    let db = DBA.instance(PG);
+    let sql = query.createCommand(db).getRawSql();
+    expect(`SELECT * FROM "users" GROUP BY "team", "company", "age"`).equal(sql);
+  })
+
 
 
 });

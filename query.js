@@ -36,10 +36,26 @@ class Query extends Base {
     return this.rules['from'] ?? '';
   }
 
+  /**
+   * Gets the HAVING part of the query.
+   * @returns {*|Object|Array|string}
+   */
   getHaving() {
     return this.rules['having'] ?? '';
   }
 
+  /**
+   * Gets the GROUP BY part of the query
+   * @returns {*|Object|Array|string}
+   */
+  getGroupBy() {
+    return this.rules['groupBy'] ?? '';
+  }
+
+  /**
+   * Gets the WHERE part of the query.
+   * @returns {*|Object|Array|string}
+   */
   getWhere() {
     return this.rules['where'] ?? '';
   }
@@ -48,6 +64,10 @@ class Query extends Base {
     return this.rules['params'] ?? {};
   }
 
+  /**
+   * Gets the SELECT part of the query.
+   * @returns {*|Object|Array|string}
+   */
   getSelect() {
     return this.rules['select'] ?? '';
   }
@@ -223,17 +243,33 @@ class Query extends Base {
     return this;
   }
 
-  having(condition, params){
+  /**
+   * Sets the HAVING part of the query.
+   * @param {array|{}} condition
+   * @param {{}} params
+   * @returns {Query}
+   */
+  having(condition, params = {}) {
     this.rules['having'] = condition;
     this.addParams(params);
     return this;
   }
 
+  /**
+   * Check condition params for methods filter<Condition|Having>
+   * @param {{}|array} condition
+   * @returns {boolean|boolean}
+   */
   hasCondition(condition) {
     return Array.isArray(condition) && condition.length !== 0
       || typeof condition === 'object' && !this.isEmpty(condition);
   }
 
+  /**
+   * Sets the HAVING part of the query.
+   * @param condition
+   * @returns {Query}
+   */
   filterHaving(condition) {
     condition = this.filterCondition(condition);
     if (this.hasCondition(condition)) {
@@ -242,40 +278,95 @@ class Query extends Base {
     return this;
   }
 
-  where(condition, params) {
+  orFilterHaving(condition) {
+    condition = this.filterCondition(condition);
+    if (this.hasCondition(condition)) {
+      this.orHaving(condition);
+    }
+    return this;
+  }
+
+  andFilterHaving(condition) {
+    condition = this.filterCondition(condition);
+    if (this.hasCondition(condition)) {
+      this.andHaving(condition);
+    }
+    return this;
+  }
+
+  andHaving(condition, params = {}) {
+    this.#andRules('having', condition, params);
+  }
+
+  orHaving(condition, params = {}) {
+    this.#orRules('having', condition, params);
+  }
+
+  #orRules(ruleType, condition, params = {}) {
+    if (this.rules[ruleType] === void 0) {
+      this.rules[ruleType] = condition;
+    } else {
+      this.rules[ruleType] = ['or', this.rules[ruleType], condition];
+    }
+    this.addParams(params);
+  }
+
+  #andRules(ruleType, condition, params = {}) {
+    if (this.rules[ruleType] === void 0) {
+      this.rules[ruleType] = condition;
+    } else if (
+      Array.isArray(this.rules[ruleType]) &&
+      this.rules[ruleType][0] &&
+      String(this.rules[ruleType][0]).toLowerCase() === 'and'
+    ) {
+      this.rules[ruleType].push(condition);
+    } else {
+      this.rules[ruleType] = ['and', this.rules[ruleType], condition];
+    }
+    this.addParams(params);
+  }
+
+  where(condition, params = {}) {
     this.rules['where'] = condition;
     this.addParams(params);
   }
 
-  andWhere(condition, params) {
-    if (this.rules['where'] === void 0) {
-      this.rules['where'] = condition;
-    } else if (
-      Array.isArray(this.rules['where']) &&
-      this.rules['where'][0] &&
-      String(this.rules['where'][0]).toLowerCase() === 'and'
-    ) {
-      this.rules['where'].push(condition);
-    } else {
-      this.rules['where'] = ['and', this.rules['where'], condition];
-    }
-    this.addParams(params);
+  andWhere(condition, params = {}) {
+    this.#andRules('where', condition, params);
     return this;
   }
 
-  orWhere(condition, params) {
-    if (this.rules['where'] === void 0) {
-      this.rules['where'] = condition;
-    } else {
-      this.rules['where'] = ['or', this.rules['where'], condition];
+  orWhere(condition, params = {}) {
+    this.#orRules('where', condition, params);
+    return this;
+  }
+
+  filterWhere(condition) {
+    condition = this.filterCondition(condition);
+    if (this.hasCondition(condition)) {
+      this.where(condition);
     }
-    this.addParams(params);
+    return this;
+  }
+
+  orFilterWhere(condition) {
+    condition = this.filterCondition(condition);
+    if (this.hasCondition(condition)) {
+      this.orWhere(condition);
+    }
+    return this;
+  }
+
+  andFilterWhere(condition) {
+    condition = this.filterCondition(condition);
+    if (this.hasCondition(condition)) {
+      this.andWhere(condition);
+    }
     return this;
   }
 
   all() {
   }
-
 
   /**
    * @param {array|Expression|string} tables
@@ -320,14 +411,6 @@ class Query extends Base {
   exists() {
   }
 
-  filterWhere(condition) {
-    condition = this.filterCondition(condition);
-    if (this.hasCondition(condition)) {
-      this.where(condition);
-    }
-    return this;
-  }
-
   isEmpty(value) {
     return value === '' || value === void 0 ||
       (Array.isArray(value) && value.length === 0) ||
@@ -356,7 +439,7 @@ class Query extends Base {
       case 'NOT':
       case 'AND':
       case 'OR':
-        for (let key in condition){
+        for (let key in condition) {
           const subCondition = this.filterCondition(condition[key]);
           if (this.isEmpty(subCondition)) {
             delete condition[key];
@@ -370,7 +453,7 @@ class Query extends Base {
         break;
       case 'BETWEEN':
       case 'NOT BETWEEN':
-        if (condition[1] !== void 0 && condition[2] !== void 0){
+        if (condition[1] !== void 0 && condition[2] !== void 0) {
           if (this.isEmpty(condition[1]) || this.isEmpty(condition[2])) {
             return [];
           }
@@ -385,18 +468,37 @@ class Query extends Base {
     return condition;
   }
 
-  orFilterWhere(condition) {
-    condition = this.filterCondition(condition);
-    if (this.hasCondition(condition)) {
-      this.orWhere(condition);
+  normalizeGroupBy(columns) {
+    if (helper.instanceOf(columns, Expression)) {
+      columns = [columns];
+    } else if (typeof columns === 'string') {
+      columns = String(columns).trim()
+      .split(/\s*,\s*/)
+      .filter(val => val !== '');
     }
+    return columns;
+  }
+
+  /**
+   * Sets the GROUP BY part of the query.
+   * @param columns
+   * @returns {Query}
+   */
+  groupBy(columns) {
+    this.rules['groupBy'] = this.normalizeGroupBy(columns);
     return this;
   }
 
-  andFilterWhere(condition) {
-    condition = this.filterCondition(condition);
-    if (this.hasCondition(condition)) {
-      this.andWhere(condition);
+  /**
+   * Adds additional group-by columns to the existing ones.
+   * @param columns
+   * @returns {Query}
+   */
+  addGroupBy(columns) {
+    if (!this.rules['groupBy']) {
+      this.rules['groupBy'] = this.normalizeGroupBy(columns);
+    } else {
+      this.rules['groupBy'] = this.rules['groupBy'].concat(this.normalizeGroupBy(columns));
     }
     return this;
   }
