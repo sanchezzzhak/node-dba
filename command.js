@@ -8,15 +8,22 @@ class Command extends Base {
   params = {};
   /*** @type {string} the SQL statement that this command represents */
   sql;
-  
+
+  constructor(config) {
+    super(config);
+    this.setOwnProperties(config)
+    this.bindValues(config.params ?? {});
+  }
+
   getRawSql() {
     if (helper.empty(this.params)) {
       return this.sql;
     }
+
     let params = {};
     for (let key in this.params) {
-      let name = '';
-      if (!Number.isFinite(key) && helper.strncmp(name, ':', 1)) {
+      let name = key;
+      if (/^\d+$/.test(key) === false && helper.strncmp(name, ':', 1)) {
         name = ':' + key;
       }
       let value = this.params[key];
@@ -34,61 +41,58 @@ class Command extends Base {
       }
       if (typeof value == 'number') {
         params[name] = value;
+      } else if (/^\d[\d.]*$/.test(value) ) {
+        params[name] = value;
       }
     }
+
     if (!helper.empty(params)) {
-      return helper.replaceCallback(/(:w+)/g, (matches) => {
+      return helper.replaceCallback(/(:\w+)/g, (matches) => {
         let match = matches[1];
         return params[match] ?? match;
       }, String(this.sql));
     }
-    
+
     let sql = [];
     String(this.sql).split('?').forEach((value, index) => {
       sql.push(String(params[index] ?? '') + value);
     });
-    
+
     return sql.join();
   }
-  
-  constructor(config) {
-    super(config);
-    this.setOwnProperties(config)
-    this.bindValues(config.params ?? {});
-  }
-  
+
   bindValues(params) {
     if (params === void 0) {
       return this;
     }
-    
+
     for (let key in params) {
       this.params[key] = params[key];
     }
-    
+
     return this;
   }
-  
+
   query() {
-  
+
   }
-  
+
   queryOne() {
-  
+
   }
-  
+
   queryAll() {
-  
+
   }
-  
+
   queryColumn() {
-  
+
   }
-  
+
   queryScalar() {
-  
+
   }
-  
+
   /**
    * ```js
    *  connection.createCommand().insert('user', {
@@ -101,25 +105,25 @@ class Command extends Base {
    * @param {object} columns
    */
   insert(table, columns) {
-  
+
   }
-  
+
   batchInsert(table, columns, rows) {
-  
+
   }
-  
+
   update(table, columns, condition = '', params = {}) {
-  
+
   }
-  
+
   delete(table, condition = '', $params = {}) {
-  
+
   }
-  
+
   upsert($table, insertColumns, updateColumns = true, params = {}) {
-  
+
   }
-  
+
 }
 
 module.exports = Command;
