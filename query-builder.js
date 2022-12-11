@@ -164,6 +164,55 @@ class QueryBuilder {
     return new HashCondition(condition);
   }
 
+  buildOrderBy(columns) {
+    if (helper.empty(columns)) {
+      return '';
+    }
+    let orders = [];
+    for(let key in columns){
+      let direction = columns[key];
+      if (helper.instanceOf(direction, Expression)) {
+        orders.push(this.buildExpression(direction))
+      } else {
+        orders.push(this.db.quoteColumnName(key) + ( columns[key] === 'DESC'
+          ? 'DESC'
+          : ''
+        ))
+      }
+    }
+    return 'ORDER BY ' + orders.join(', ');
+  }
+
+  buildOrderByAndLimit(sql, orderBy, limit, offset) {
+    orderBy = this.buildOrderBy(orderBy);
+    if (orderBy !== '') {
+      sql+= this.separator + orderBy;
+    }
+    limit = this.buildLimit(limit, offset);
+    if (limit !== '') {
+      sql+= this.separator + limit;
+    }
+    return sql;
+  }
+
+  /**
+   * @param int $limit
+   * @param int $offset
+   * @return string the LIMIT and OFFSET clauses
+   */
+  buildLimit(limit, offset) {
+    let result = [];
+    if (this.hasLimit(limit)) {
+      result.push('LIMIT ' . limit);
+    }
+    if (this.hasOffset(offset)) {
+      result.push('OFFSET ' . offset);
+    }
+
+    return result.join(' ');
+  }
+
+
   /**
    * Quotes table names passed.
    * @param {array} tables
@@ -314,6 +363,12 @@ class QueryBuilder {
     );
     clauses = clauses.filter(value => value !== '');
     let sql = clauses.join(this.separator);
+    sql = this.buildOrderByAndLimit(sql,
+      query.getOrderBy(),
+      query.getLimit(),
+      query.getOffset()
+    );
+
     return {sql, params};
   }
 
@@ -331,6 +386,23 @@ class QueryBuilder {
     return placeholderName;
   }
 
+  /**
+   * Checks to see if the given limit is effective.
+   * @param limit
+   * @returns {boolean}
+   */
+  hasLimit(limit) {
+    return helper.instanceOf(limit, Expression) || helper.isNumber(limit);
+  }
+
+  /**
+   * Checks to see if the given offset is effective.
+   * @param offset
+   * @returns {boolean}
+   */
+  hasOffset(offset) {
+    return helper.instanceOf(offset, Expression) || (helper.isNumber(offset) && String(offset) !== '0')
+  }
 }
 
 module.exports = QueryBuilder;

@@ -10,7 +10,7 @@ class Expression extends Base
   constructor(expresion, params = {}, config = {}) {
     super(config);
     this.expresion = expresion;
-    this.params = expresion;
+    this.params = params;
     
     this.toString = function(){
       return this.expresion;

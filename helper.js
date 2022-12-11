@@ -28,6 +28,11 @@ exports.replaceCallback = function (pattern, callback, string) {
   return string;
 }
 
+/**
+ * @param obj
+ * @param right
+ * @returns {boolean}
+ */
 exports.instanceOf = function (obj, right) {
   return (!Array.isArray(obj) && typeof obj === 'object' && obj instanceof
     right);
@@ -261,4 +266,8 @@ exports.addcslashes = function (str, charlist) {
     }
   }
   return target
+}
+
+exports.splitCommaString = function (value) {
+  return value.trim().split(/\s*,\s*/).filter(val => val !== '')
 }

@@ -2,28 +2,22 @@ const Base = require('./base');
 const helper = require('./helper');
 const Expression = require('./expression');
 
-// /** @type {string|array|object|Expression|Map} */
-// #select;
-// /** @type {string} */
-// #selectOption;
-// /** @type {boolean} */
-// #distinct;
-// /** @type {string|array} */
-// from;
-// /** @type {array} */
-// #groupBy;
-// /** @type {array} */
-// #join;
-// /** @type {string|array} */
-// #having;
-// #union;
-// #params = {};
-//
-// #where;
-// #limit;
-// #offset;
-// #orderBy;
-// #indexBy;
+const
+  RULE_SELECT = 'select',
+  RULE_SELECT_OPTION = 'selectOption',
+  RULE_WHERE = 'where',
+  RULE_FROM = 'from',
+  RULE_JOIN = 'join',
+  RULE_UNION = 'union',
+  RULE_HAVING = 'having',
+  RULE_GROUP_BY = 'groupBy',
+  RULE_ORDER_BY = 'orderBy',
+  RULE_LIMIT = 'limit',
+  RULE_PARAMS = 'params',
+  RULE_OFFSET = 'offset',
+  RULE_DISTINCT = 'distinct',
+  RULE_INDEX_BY = 'indexBy';
+
 
 class Query extends Base {
 
@@ -33,7 +27,7 @@ class Query extends Base {
 
 
   getFrom() {
-    return this.rules['from'] ?? '';
+    return this.rules[RULE_FROM] ?? '';
   }
 
   /**
@@ -41,7 +35,7 @@ class Query extends Base {
    * @returns {*|Object|Array|string}
    */
   getHaving() {
-    return this.rules['having'] ?? '';
+    return this.rules[RULE_HAVING] ?? '';
   }
 
   /**
@@ -49,7 +43,7 @@ class Query extends Base {
    * @returns {*|Object|Array|string}
    */
   getGroupBy() {
-    return this.rules['groupBy'] ?? '';
+    return this.rules[RULE_GROUP_BY] ?? '';
   }
 
   /**
@@ -57,11 +51,23 @@ class Query extends Base {
    * @returns {*|Object|Array|string}
    */
   getWhere() {
-    return this.rules['where'] ?? '';
+    return this.rules[RULE_WHERE] ?? '';
   }
 
   getParams() {
-    return this.rules['params'] ?? {};
+    return this.rules[RULE_PARAMS] ?? {};
+  }
+
+  getOrderBy() {
+    return this.rules[RULE_ORDER_BY] ?? '';
+  }
+
+  getLimit() {
+    return this.rules[RULE_LIMIT] ?? '';
+  }
+
+  getOffset() {
+    return this.rules[RULE_OFFSET] ?? 0;
   }
 
   /**
@@ -69,15 +75,15 @@ class Query extends Base {
    * @returns {*|Object|Array|string}
    */
   getSelect() {
-    return this.rules['select'] ?? '';
+    return this.rules[RULE_SELECT] ?? '';
   }
 
   getSelectOption() {
-    return this.rules['selectOption'] ?? '';
+    return this.rules[RULE_SELECT_OPTION] ?? '';
   }
 
   getDistinct() {
-    return Boolean(this.rules['distinct'] ?? false);
+    return Boolean(this.rules[RULE_DISTINCT] ?? false);
   }
 
   /**
@@ -97,7 +103,7 @@ class Query extends Base {
    * @return {Query}
    */
   distinct(stage = true) {
-    this.rules['distinct'] = Boolean(stage);
+    this.rules[RULE_DISTINCT] = Boolean(stage);
     return this;
   }
 
@@ -107,8 +113,8 @@ class Query extends Base {
    * @param {string} option
    */
   select(columns, option) {
-    this.rules['select'] = this.normalizeSelect(columns);
-    this.rules['selectOption'] = option;
+    this.rules[RULE_SELECT] = this.normalizeSelect(columns);
+    this.rules[RULE_SELECT_OPTION] = option;
     return this;
   }
 
@@ -118,12 +124,11 @@ class Query extends Base {
    * @returns {Query}
    */
   addSelect(columns) {
-    if (this.rules['select'] === void 0) {
-      this.rules['select'] = this.normalizeSelect(columns);
+    if (this.rules[RULE_SELECT] === void 0) {
+      this.rules[RULE_SELECT] = this.normalizeSelect(columns);
     } else {
-      this.rules['select'] = {...this.rules['select'], ...this.normalizeSelect(columns)};
+      this.rules[RULE_SELECT] = {...this.rules[RULE_SELECT], ...this.normalizeSelect(columns)};
     }
-
     return this;
   }
 
@@ -136,7 +141,7 @@ class Query extends Base {
     if (helper.instanceOf(columns, Expression)) {
       columns = [columns];
     } else if (typeof columns === 'string') {
-      columns = columns.trim().split(/\s*,\s*/);
+      columns = helper.splitCommaString(columns)
     }
 
     let result = {};
@@ -169,7 +174,7 @@ class Query extends Base {
    * @returns {Query}
    */
   params(params) {
-    this.rules['params'] = params;
+    this.rules[RULE_PARAMS] = params;
     return this;
   }
 
@@ -181,10 +186,10 @@ class Query extends Base {
     if (helper.empty(params)) {
       return this;
     }
-    if (helper.empty(this.rules['params'])) {
-      this.rules['params'] = params;
+    if (helper.empty(this.rules[RULE_PARAMS])) {
+      this.rules[RULE_PARAMS] = params;
     } else {
-      this.rules['params'] = {...this.rules['params'], ...params};
+      this.rules[RULE_PARAMS] = {...this.rules[RULE_PARAMS], ...params};
     }
     return this;
   }
@@ -194,7 +199,7 @@ class Query extends Base {
    * @param {number|Expression} limit
    */
   limit(limit) {
-    this.rules['limit'] = limit;
+    this.rules[RULE_LIMIT] = limit;
     return this;
   }
 
@@ -203,7 +208,8 @@ class Query extends Base {
    * @param {number|Expression} offset
    */
   offset(offset) {
-    this.rules['offset'] = offset;
+    this.rules[RULE_OFFSET] = offset;
+    return this;
   }
 
   /**
@@ -211,7 +217,18 @@ class Query extends Base {
    * @param {string|object|Expression} columns
    */
   orderBy(columns) {
-    this.rules['orderBy'] = this.normalizeOrderBy(columns);
+    this.rules[RULE_ORDER_BY] = void 0;
+    this.addOrderBy(columns);
+    return this;
+  }
+
+  addOrderBy(columns) {
+    if (!this.rules[RULE_ORDER_BY]) {
+      this.rules[RULE_ORDER_BY] = this.normalizeOrderBy(columns);
+    } else {
+      this.rules[RULE_ORDER_BY] = {...this.rules[RULE_ORDER_BY], ...this.normalizeOrderBy(columns)};
+    }
+
     return this;
   }
 
@@ -219,27 +236,27 @@ class Query extends Base {
     if (helper.instanceOf(columns, Expression)) {
       return [columns];
     }
-    if (typeof columns === 'object') {
-      return columns;
-    }
     if (typeof columns === 'string') {
-      let result = {};
-      let partColumns = columns.trim().split(/\s*,\s*/);
-      for (let column of partColumns) {
-        let match = /^(.*?)\s+((?:a|de)sc)$/i.exec(column);
-        if (match !== null) {
-          result[match[1]] = String(match[2]).toLowerCase().indexOf('desc') !== -1 ? 'DESC' : 'ASC';
-          continue;
+      columns = helper.splitCommaString(columns);
+      let results = {};
+      for (let column of columns) {
+        if (typeof column === 'string') {
+          let match = /^(.*?)\s+((?:a|de)sc)$/i.exec(column);
+          if (match !== null) {
+            results[match[1]] = String(match[2]).toLowerCase().indexOf('desc') !== -1 ? 'DESC' : 'ASC'
+          } else {
+            results[column] = 'ASC'
+          }
         }
-        result[column] = 'ASC';
       }
-      return result;
+      return [results];
     }
-    throw new Error('Not support variable for `columns`');
+
+    return columns;
   }
 
   indexBy(column) {
-    this.rules['indexBy'] = column;
+    this.rules[RULE_INDEX_BY] = column;
     return this;
   }
 
@@ -250,7 +267,7 @@ class Query extends Base {
    * @returns {Query}
    */
   having(condition, params = {}) {
-    this.rules['having'] = condition;
+    this.rules[RULE_HAVING] = condition;
     this.addParams(params);
     return this;
   }
@@ -295,11 +312,11 @@ class Query extends Base {
   }
 
   andHaving(condition, params = {}) {
-    this.#andRules('having', condition, params);
+    this.#andRules(RULE_HAVING, condition, params);
   }
 
   orHaving(condition, params = {}) {
-    this.#orRules('having', condition, params);
+    this.#orRules(RULE_HAVING, condition, params);
   }
 
   #orRules(ruleType, condition, params = {}) {
@@ -327,17 +344,17 @@ class Query extends Base {
   }
 
   where(condition, params = {}) {
-    this.rules['where'] = condition;
+    this.rules[RULE_WHERE] = condition;
     this.addParams(params);
   }
 
   andWhere(condition, params = {}) {
-    this.#andRules('where', condition, params);
+    this.#andRules(RULE_WHERE, condition, params);
     return this;
   }
 
   orWhere(condition, params = {}) {
-    this.#orRules('where', condition, params);
+    this.#orRules(RULE_WHERE, condition, params);
     return this;
   }
 
@@ -377,9 +394,9 @@ class Query extends Base {
     }
 
     if (typeof tables === 'string') {
-      tables = tables.trim().split(/\s*,\s*/).filter(val => val !== '');
+      tables = helper.splitCommaString(tables)
     }
-    this.rules['from'] = tables;
+    this.rules[RULE_FROM] = tables;
     return this;
   }
 
@@ -472,9 +489,7 @@ class Query extends Base {
     if (helper.instanceOf(columns, Expression)) {
       columns = [columns];
     } else if (typeof columns === 'string') {
-      columns = String(columns).trim()
-      .split(/\s*,\s*/)
-      .filter(val => val !== '');
+      columns = helper.splitCommaString(columns)
     }
     return columns;
   }
@@ -485,7 +500,8 @@ class Query extends Base {
    * @returns {Query}
    */
   groupBy(columns) {
-    this.rules['groupBy'] = this.normalizeGroupBy(columns);
+    this.rules[RULE_GROUP_BY] = void 0;
+    this.addGroupBy(columns);
     return this;
   }
 
@@ -495,10 +511,10 @@ class Query extends Base {
    * @returns {Query}
    */
   addGroupBy(columns) {
-    if (!this.rules['groupBy']) {
-      this.rules['groupBy'] = this.normalizeGroupBy(columns);
+    if (!this.rules[RULE_GROUP_BY]) {
+      this.rules[RULE_GROUP_BY] = this.normalizeGroupBy(columns);
     } else {
-      this.rules['groupBy'] = this.rules['groupBy'].concat(this.normalizeGroupBy(columns));
+      this.rules[RULE_GROUP_BY] = this.rules[RULE_GROUP_BY].concat(this.normalizeGroupBy(columns));
     }
     return this;
   }
