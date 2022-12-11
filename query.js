@@ -36,7 +36,11 @@ class Query extends Base {
     return this.rules['from'] ?? '';
   }
 
-  getWhere(){
+  getHaving() {
+    return this.rules['having'] ?? '';
+  }
+
+  getWhere() {
     return this.rules['where'] ?? '';
   }
 
@@ -94,7 +98,7 @@ class Query extends Base {
    * @returns {Query}
    */
   addSelect(columns) {
-    if (this.rules['select'] == void 0) {
+    if (this.rules['select'] === void 0) {
       this.rules['select'] = this.normalizeSelect(columns);
     } else {
       this.rules['select'] = {...this.rules['select'], ...this.normalizeSelect(columns)};
@@ -219,6 +223,25 @@ class Query extends Base {
     return this;
   }
 
+  having(condition, params){
+    this.rules['having'] = condition;
+    this.addParams(params);
+    return this;
+  }
+
+  hasCondition(condition) {
+    return Array.isArray(condition) && condition.length !== 0
+      || typeof condition === 'object' && !this.isEmpty(condition);
+  }
+
+  filterHaving(condition) {
+    condition = this.filterCondition(condition);
+    if (this.hasCondition(condition)) {
+      this.having(condition);
+    }
+    return this;
+  }
+
   where(condition, params) {
     this.rules['where'] = condition;
     this.addParams(params);
@@ -295,6 +318,87 @@ class Query extends Base {
   }
 
   exists() {
+  }
+
+  filterWhere(condition) {
+    condition = this.filterCondition(condition);
+    if (this.hasCondition(condition)) {
+      this.where(condition);
+    }
+    return this;
+  }
+
+  isEmpty(value) {
+    return value === '' || value === void 0 ||
+      (Array.isArray(value) && value.length === 0) ||
+      value === null ||
+      (typeof value === 'object' && Object.keys(value).length === 0) ||
+      (typeof value === 'string' && value.trim() === '');
+  }
+
+  filterCondition(condition) {
+    if (typeof condition !== 'object') {
+      return condition;
+    }
+
+    if (condition[0] === void 0) {
+      for (let key in condition) {
+        if (this.isEmpty(condition[key])) {
+          delete condition[key];
+        }
+      }
+      return condition;
+    }
+
+    let operator = condition.shift();
+
+    switch (operator.toUpperCase()) {
+      case 'NOT':
+      case 'AND':
+      case 'OR':
+        for (let key in condition){
+          const subCondition = this.filterCondition(condition[key]);
+          if (this.isEmpty(subCondition)) {
+            delete condition[key];
+          } else {
+            condition[key] = subCondition;
+          }
+        }
+        if (this.isEmpty(condition)) {
+          return [];
+        }
+        break;
+      case 'BETWEEN':
+      case 'NOT BETWEEN':
+        if (condition[1] !== void 0 && condition[2] !== void 0){
+          if (this.isEmpty(condition[1]) || this.isEmpty(condition[2])) {
+            return [];
+          }
+        }
+        break;
+      default:
+        if (this.isEmpty(condition[1])) {
+          return [];
+        }
+    }
+    condition.unshift(operator);
+    return condition;
+  }
+
+  orFilterWhere(condition) {
+    condition = this.filterCondition(condition);
+    if (this.hasCondition(condition)) {
+      this.orWhere(condition);
+    }
+    return this;
+  }
+
+  andFilterWhere(condition) {
+    condition = this.filterCondition(condition);
+    if (this.hasCondition(condition)) {
+      this.andWhere(condition);
+    }
+    return this;
   }
 
   /**

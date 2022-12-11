@@ -1,8 +1,8 @@
 const Base = require('./base');
 const QueryBuilder = require('./query-builder');
+ const helper = require('./helper');
 
-class Schema extends Base
-{
+class Schema extends Base {
   /*** {Connection} @type */
   db;
 
@@ -13,13 +13,19 @@ class Schema extends Base
     super(config);
     this.setOwnProperties(config);
   }
-  
+
   getQueryBuilder() {
     return new QueryBuilder(this.db);
   }
-  
+
   quoteValue(value) {
-    return value;
+    if (typeof value == 'number') {
+      return value;
+    } else if (/^\d[\d.]*$/.test(value)) {
+      return value;
+    }
+
+    return "'" + helper.addcslashes(value.replaceAll("'", "''"), "\\000\n\r\\032") + "'";
   }
 
   /**
@@ -39,7 +45,7 @@ class Schema extends Base
     let pos = name.indexOf('.');
     if (pos !== -1) {
       prefix = this.quoteTableName(name.substr(0, pos)) + '.';
-      name = name.substr(pos+1);
+      name = name.substr(pos + 1);
     }
     if (name.indexOf('{{') !== -1) {
       return name;
@@ -83,14 +89,14 @@ class Schema extends Base
    */
   quoteTableName(name) {
 
-    if(/^\(.+\)$/.test(name) || name.indexOf('{{') !== -1){
+    if (/^\(.+\)$/.test(name) || name.indexOf('{{') !== -1) {
       return name;
     }
     if (name.indexOf('.') === -1) {
       return this.quoteSimpleTableName(name);
     }
     let parts = this.getTableNameParts(name);
-    for(let key in parts) {
+    for (let key in parts) {
       parts[key] = this.quoteSimpleTableName(parts[key]);
     }
 
@@ -107,7 +113,7 @@ class Schema extends Base
     return name.split('.');
   }
 
-  
+
 }
 
 module.exports = Schema;

@@ -133,9 +133,66 @@ describe('tests connections', function () {
     query.from(['profiles'])
 
     let db = DBA.instance(PG);
-    console.log(query.createCommand(db).getRawSql());
-
+    let sql = query.createCommand(db).getRawSql();
+    expect(`SELECT *  FROM "profiles" WHERE ((id = 1) AND (name = 'something')) OR (age = 33)`).equal(sql);
   });
+
+  it('test filter hash where for Query', function () {
+    let query = new Query();
+    query.filterWhere({
+      'id': 0,
+      'title': '   ',
+      'author_ids': [],
+    });
+    expect({'id': 0}).to.deep.equal(query.getWhere());
+
+    query.andFilterWhere({'status': null});
+    expect({'id': 0}).to.deep.equal(query.getWhere());
+
+    query.orFilterWhere({'name': '', hello: void 0});
+    expect({'id': 0}).to.deep.equal(query.getWhere());
+  })
+
+  it('test filter array where for Query', function () {
+    let condition = ['like', 'name', 'Odyssey'];
+    let query = new Query();
+    query.filterWhere(condition);
+    expect(condition).to.deep.equal(query.getWhere());
+
+    query.andFilterWhere(['between', 'id', null, null]);
+    expect(condition).to.deep.equal(query.getWhere());
+    query.orFilterWhere(['not between', 'id', null, null]);
+    expect(condition).to.deep.equal(query.getWhere());
+
+    query.andFilterWhere(['in', 'id', []]);
+    expect(condition).to.deep.equal(query.getWhere());
+
+    query.andFilterWhere(['not in', 'id', []]);
+    expect(condition).to.deep.equal(query.getWhere());
+
+    query.andFilterWhere(['like', 'id', '']);
+    expect(condition).to.deep.equal(query.getWhere());
+
+    query.andFilterWhere(['or like', 'id', '']);
+    expect(condition).to.deep.equal(query.getWhere());
+
+    query.andFilterWhere(['not like', 'id', '   ']);
+    expect(condition).to.deep.equal(query.getWhere());
+
+    query.andFilterWhere(['or not like', 'id', null]);
+    expect(condition).to.deep.equal(query.getWhere());
+
+    query.andFilterWhere(['or', ['eq', 'id', null], ['eq', 'id', []]]);
+    expect(condition).to.deep.equal(query.getWhere());
+  })
+
+  it('test filter having for Query', function() {
+    let query = new Query();
+    query.filterHaving({
+      'id': 0,
+    });
+    expect({'id': 0}).to.deep.equal(query.getHaving());
+  })
 
 
 });
