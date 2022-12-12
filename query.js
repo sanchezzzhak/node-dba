@@ -224,33 +224,19 @@ class Query extends Base {
 
   addOrderBy(columns) {
     if (!this.rules[RULE_ORDER_BY]) {
-      this.rules[RULE_ORDER_BY] = this.normalizeOrderBy(columns);
-    } else {
-      this.rules[RULE_ORDER_BY] = {...this.rules[RULE_ORDER_BY], ...this.normalizeOrderBy(columns)};
+      this.rules[RULE_ORDER_BY] = [];
     }
+    this.rules[RULE_ORDER_BY].concat(this.normalizeOrderBy(columns));
+    // todo added filter objects remove
+
 
     return this;
   }
 
   normalizeOrderBy(columns) {
-    if (helper.instanceOf(columns, Expression)) {
-      return [columns];
-    }
-    if (typeof columns === 'string') {
-      columns = helper.splitCommaString(columns);
-      let results = {};
-      for (let column of columns) {
-        if (typeof column === 'string') {
-          let match = /^(.*?)\s+((?:a|de)sc)$/i.exec(column);
-          if (match !== null) {
-            results[match[1]] = String(match[2]).toLowerCase().indexOf('desc') !== -1 ? 'DESC' : 'ASC'
-          } else {
-            results[column] = 'ASC'
-          }
-        }
-      }
-      return [results];
-    }
+    let result = [];
+
+
 
     return columns;
   }

@@ -288,7 +288,7 @@ describe('tests connections', function () {
     sql = query.createCommand(db).getRawSql();
     expect('SELECT * FROM "users" ORDER BY SUBSTR(name, 3, 4) DESC, x ASC').to.deep.equal(sql);
 
-    let expression2 = new Expression('SUBSTR(name, 893, 4) DESC, x ASC');
+    let expression2 = new Expression('SUBSTR(name, 893, 4) DESC');
     query.addOrderBy(expression2);
     sql = query.createCommand(db).getRawSql();
     expect('SELECT * FROM "users" ORDER BY SUBSTR(name, 3, 4) DESC, x ASC').to.deep.equal(sql);
