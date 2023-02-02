@@ -3,21 +3,22 @@ const helper = require('./helper');
 const Expression = require('./expression');
 
 const
-  RULE_SELECT = 'select',
-  RULE_SELECT_OPTION = 'selectOption',
-  RULE_WHERE = 'where',
-  RULE_FROM = 'from',
-  RULE_JOIN = 'join',
-  RULE_UNION = 'union',
-  RULE_HAVING = 'having',
-  RULE_GROUP_BY = 'groupBy',
-  RULE_ORDER_BY = 'orderBy',
-  RULE_LIMIT = 'limit',
-  RULE_PARAMS = 'params',
-  RULE_OFFSET = 'offset',
-  RULE_DISTINCT = 'distinct',
-  RULE_INDEX_BY = 'indexBy';
+    RULE_SELECT = 'select',
+    RULE_SELECT_OPTION = 'selectOption',
+    RULE_WHERE = 'where',
+    RULE_FROM = 'from',
+    RULE_JOIN = 'join',
+    RULE_UNION = 'union',
+    RULE_HAVING = 'having',
+    RULE_GROUP_BY = 'groupBy',
+    RULE_ORDER_BY = 'orderBy',
+    RULE_LIMIT = 'limit',
+    RULE_PARAMS = 'params',
+    RULE_OFFSET = 'offset',
+    RULE_DISTINCT = 'distinct',
+    RULE_INDEX_BY = 'indexBy';
 
+const COLUMN_ORDER_SEPARATOR = /\s*,\s*/;
 
 class Query extends Base {
 
@@ -112,9 +113,11 @@ class Query extends Base {
    * @param {string|array|object|Expression|Map} columns
    * @param {string} option
    */
-  select(columns, option) {
+  select(columns, option = void 0) {
     this.rules[RULE_SELECT] = this.normalizeSelect(columns);
-    this.rules[RULE_SELECT_OPTION] = option;
+    if (option !== void 0) {
+      this.rules[RULE_SELECT_OPTION] = option;
+    }
     return this;
   }
 
@@ -127,7 +130,9 @@ class Query extends Base {
     if (this.rules[RULE_SELECT] === void 0) {
       this.rules[RULE_SELECT] = this.normalizeSelect(columns);
     } else {
-      this.rules[RULE_SELECT] = {...this.rules[RULE_SELECT], ...this.normalizeSelect(columns)};
+      this.rules[RULE_SELECT] = {
+        ...this.rules[RULE_SELECT], ...this.normalizeSelect(columns),
+      };
     }
     return this;
   }
@@ -141,7 +146,7 @@ class Query extends Base {
     if (helper.instanceOf(columns, Expression)) {
       columns = [columns];
     } else if (typeof columns === 'string') {
-      columns = helper.splitCommaString(columns)
+      columns = helper.splitCommaString(columns);
     }
 
     let result = {};
@@ -153,7 +158,8 @@ class Query extends Base {
       }
       if (typeof column === 'string') {
         let match = /^(.*?)(?:\s+as\s+|\s+)([\w\-_\.]+)$/i.exec(column);
-        if (match !== null && !helper.isNumber(match[2]) && match[2].indexOf('.') === -1) {
+        if (match !== null && !helper.isNumber(match[2]) &&
+            match[2].indexOf('.') === -1) {
           result[match[2]] = match[1];
           continue;
         }
@@ -227,18 +233,37 @@ class Query extends Base {
       this.rules[RULE_ORDER_BY] = [];
     }
     this.rules[RULE_ORDER_BY].concat(this.normalizeOrderBy(columns));
-    // todo added filter objects remove
-
-
     return this;
   }
 
+  /**
+   * Adds additional ORDER BY columns to the query.
+   * @param {string|object|Expression} columns
+   * @returns {*}
+   */
   normalizeOrderBy(columns) {
+
+    if (helper.empty(columns) || !columns) {
+      return [];
+    }
+    if (helper.instanceOf(columns, Expression)) {
+      return [columns];
+    }
+
+    if (Array.isArray(columns)) {
+      return columns;
+    }
     let result = [];
+    String(columns).trim().split(COLUMN_ORDER_SEPARATOR).forEach((column) => {
+      let match = column.match(/^(.*?)\s+(asc|desc)/i);
+      if (match) {
+        result.push(match[1] + ' ' + match[2].toUpperCase());
+        return;
+      }
+      result.push(column + ' ASC');
+    });
 
-
-
-    return columns;
+    return result;
   }
 
   indexBy(column) {
@@ -265,7 +290,7 @@ class Query extends Base {
    */
   hasCondition(condition) {
     return Array.isArray(condition) && condition.length !== 0
-      || typeof condition === 'object' && !this.isEmpty(condition);
+        || typeof condition === 'object' && !this.isEmpty(condition);
   }
 
   /**
@@ -318,9 +343,9 @@ class Query extends Base {
     if (this.rules[ruleType] === void 0) {
       this.rules[ruleType] = condition;
     } else if (
-      Array.isArray(this.rules[ruleType]) &&
-      this.rules[ruleType][0] &&
-      String(this.rules[ruleType][0]).toLowerCase() === 'and'
+        Array.isArray(this.rules[ruleType]) &&
+        this.rules[ruleType][0] &&
+        String(this.rules[ruleType][0]).toLowerCase() === 'and'
     ) {
       this.rules[ruleType].push(condition);
     } else {
@@ -380,7 +405,7 @@ class Query extends Base {
     }
 
     if (typeof tables === 'string') {
-      tables = helper.splitCommaString(tables)
+      tables = helper.splitCommaString(tables);
     }
     this.rules[RULE_FROM] = tables;
     return this;
@@ -416,10 +441,10 @@ class Query extends Base {
 
   isEmpty(value) {
     return value === '' || value === void 0 ||
-      (Array.isArray(value) && value.length === 0) ||
-      value === null ||
-      (typeof value === 'object' && Object.keys(value).length === 0) ||
-      (typeof value === 'string' && value.trim() === '');
+        (Array.isArray(value) && value.length === 0) ||
+        value === null ||
+        (typeof value === 'object' && Object.keys(value).length === 0) ||
+        (typeof value === 'string' && value.trim() === '');
   }
 
   filterCondition(condition) {
@@ -475,7 +500,7 @@ class Query extends Base {
     if (helper.instanceOf(columns, Expression)) {
       columns = [columns];
     } else if (typeof columns === 'string') {
-      columns = helper.splitCommaString(columns)
+      columns = helper.splitCommaString(columns);
     }
     return columns;
   }
@@ -500,7 +525,8 @@ class Query extends Base {
     if (!this.rules[RULE_GROUP_BY]) {
       this.rules[RULE_GROUP_BY] = this.normalizeGroupBy(columns);
     } else {
-      this.rules[RULE_GROUP_BY] = this.rules[RULE_GROUP_BY].concat(this.normalizeGroupBy(columns));
+      this.rules[RULE_GROUP_BY] = this.rules[RULE_GROUP_BY].concat(
+          this.normalizeGroupBy(columns));
     }
     return this;
   }
