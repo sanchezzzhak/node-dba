@@ -18,8 +18,6 @@ const
     RULE_DISTINCT = 'distinct',
     RULE_INDEX_BY = 'indexBy';
 
-const COLUMN_ORDER_SEPARATOR = /\s*,\s*/;
-
 class Query extends Base {
 
   rules = {};
@@ -232,7 +230,7 @@ class Query extends Base {
     if (!this.rules[RULE_ORDER_BY]) {
       this.rules[RULE_ORDER_BY] = [];
     }
-    this.rules[RULE_ORDER_BY].concat(this.normalizeOrderBy(columns));
+    this.rules[RULE_ORDER_BY] = this.rules[RULE_ORDER_BY].concat(this.normalizeOrderBy(columns));
     return this;
   }
 
@@ -242,26 +240,27 @@ class Query extends Base {
    * @returns {*}
    */
   normalizeOrderBy(columns) {
-
-    if (helper.empty(columns) || !columns) {
+    if (helper.empty(columns)) {
       return [];
     }
-    if (helper.instanceOf(columns, Expression)) {
+    if (helper.instanceOf(columns, Expression) || typeof columns === 'object') {
       return [columns];
+    }
+    let result = [];
+    if (typeof columns === 'string') {
+      helper.splitCommaString(columns).forEach((column) => {
+        let match = column.match(/^(.*?)\s+(asc|desc)/i);
+        if (match) {
+          result.push(match[1] + ' ' + match[2].toUpperCase());
+          return;
+        }
+        result.push(column + ' ASC');
+      });
     }
 
     if (Array.isArray(columns)) {
       return columns;
     }
-    let result = [];
-    String(columns).trim().split(COLUMN_ORDER_SEPARATOR).forEach((column) => {
-      let match = column.match(/^(.*?)\s+(asc|desc)/i);
-      if (match) {
-        result.push(match[1] + ' ' + match[2].toUpperCase());
-        return;
-      }
-      result.push(column + ' ASC');
-    });
 
     return result;
   }

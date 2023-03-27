@@ -21,6 +21,11 @@ exports.merge = function (param1, param2) {
   return {...param1, ...param2};
 }
 
+exports.extractObject = function (obj){
+  let [key, value] = Object.entries(obj)[0];
+  return {key, value};
+}
+
 exports.replaceCallback = function (pattern, callback, string) {
   [...string.matchAll(pattern)].forEach(value => {
     string = string.replace(value[0], callback(value));

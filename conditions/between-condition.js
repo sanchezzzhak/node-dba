@@ -11,7 +11,6 @@ class BetweenCondition extends Expression
   #intervalStart;
   #intervalEnd;
 
-
   constructor(operator, operands) {
     super();
   }

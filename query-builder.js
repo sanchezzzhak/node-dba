@@ -2,6 +2,7 @@ const helper = require('./helper');
 const Expression = require('./expression');
 const ExpressionBuilder = require('./expression-builder');
 const Query = require('./query');
+const Order = require('./sql/order');
 
 const {
   SimpleCondition,
@@ -9,7 +10,7 @@ const {
   ConjunctionCondition,
   ExistsCondition,
   NotCondition,
-  BetweenCondition
+  BetweenCondition,
 } = require('./conditions');
 
 const {
@@ -17,7 +18,7 @@ const {
   SimpleConditionBuilder,
   ConjunctionConditionBuilder,
   ExistsConditionBuilder,
-  NotConditionBuilder
+  NotConditionBuilder,
 } = require('./builders');
 
 const PARAM_PREFIX = ':qp';
@@ -33,7 +34,7 @@ class QueryBuilder {
   separator = ' ';
 
   conditionMap = {};
-  expressionBuilderMap = {}
+  expressionBuilderMap = {};
 
   /**
    * @param db {Connection|PgConnection}
@@ -50,8 +51,8 @@ class QueryBuilder {
       'ConjunctionCondition': ConjunctionConditionBuilder,
       'ExistsCondition': ExistsConditionBuilder,
       'NotCondition': NotConditionBuilder,
-      'SimpleCondition': SimpleConditionBuilder
-    }
+      'SimpleCondition': SimpleConditionBuilder,
+    };
   }
 
   getDefaultConditionMap() {
@@ -63,7 +64,7 @@ class QueryBuilder {
       'NOT': NotCondition,
       'BETWEEN': BetweenCondition,
       'NOT BETWEEN': BetweenCondition,
-    }
+    };
   }
 
   /**
@@ -110,14 +111,12 @@ class QueryBuilder {
     if (helper.empty(columns)) {
       return '';
     }
-
     let result = [];
     for (let key in columns) {
       let column = columns[key];
       if (column === void 0) {
         continue;
       }
-
       if (helper.instanceOf(column, Expression)) {
         let sqlPart = this.buildExpression(column);
         result.push(sqlPart);
@@ -141,7 +140,6 @@ class QueryBuilder {
    * @returns {string|*}
    */
   buildCondition(condition, params) {
-
     if (helper.empty(condition)) {
       return '';
     }
@@ -168,29 +166,30 @@ class QueryBuilder {
     if (helper.empty(columns)) {
       return '';
     }
-    let orders = [];
-    for(let key in columns){
-      let direction = columns[key];
-      if (helper.instanceOf(direction, Expression)) {
-        orders.push(this.buildExpression(direction))
-      } else {
-        orders.push(this.db.quoteColumnName(key) + ( columns[key] === 'DESC'
-          ? 'DESC'
-          : ''
-        ))
+    let orders = Order.from(columns);
+    let results = [];
+    for (let order of orders) {
+      if (order.expression) {
+        results.push(
+            this.buildExpression(order.expression),
+        );
+        continue;
       }
+      let column = this.db.quoteColumnName(order.column);
+      results.push(column + ' ' + order.direction);
     }
-    return 'ORDER BY ' + orders.join(', ');
+
+    return results.length > 0 ? 'ORDER BY ' + results.join(', ') : '';
   }
 
   buildOrderByAndLimit(sql, orderBy, limit, offset) {
     orderBy = this.buildOrderBy(orderBy);
     if (orderBy !== '') {
-      sql+= this.separator + orderBy;
+      sql += this.separator + orderBy;
     }
     limit = this.buildLimit(limit, offset);
     if (limit !== '') {
-      sql+= this.separator + limit;
+      sql += this.separator + limit;
     }
     return sql;
   }
@@ -203,15 +202,14 @@ class QueryBuilder {
   buildLimit(limit, offset) {
     let result = [];
     if (this.hasLimit(limit)) {
-      result.push('LIMIT ' . limit);
+      result.push('LIMIT '.limit);
     }
     if (this.hasOffset(offset)) {
-      result.push('OFFSET ' . offset);
+      result.push('OFFSET '.offset);
     }
 
     return result.join(' ');
   }
-
 
   /**
    * Quotes table names passed.
@@ -224,14 +222,14 @@ class QueryBuilder {
     for (let i in tables) {
       let table = tables[i];
 
-
       if (helper.instanceOf(table, Query)) {
-        let {sql, params} = this.build(table, params)
+        let {sql, params} = this.build(table, params);
         tables[i] = '(' + sql + ') ' + this.db.quoteTableName(i);
         continue;
       }
 
-      if (typeof table === 'string' && /^\d+$/.test(i) === false && i !== table) {
+      if (typeof table === 'string' && /^\d+$/.test(i) === false && i !==
+          table) {
         if (table.indexOf('(') === -1) {
           table = this.db.quoteTableName(table);
         }
@@ -242,7 +240,8 @@ class QueryBuilder {
       if (table.indexOf('(') === -1) {
         let tableWithAlias = this.extractAlias(table);
         if (tableWithAlias !== null) {
-          tables[i] = this.db.quoteTableName(tableWithAlias[1]) + ' ' + this.db.quoteTableName(tableWithAlias[1]);
+          tables[i] = this.db.quoteTableName(tableWithAlias[1]) + ' ' +
+              this.db.quoteTableName(tableWithAlias[1]);
         } else {
           tables[i] = this.db.quoteTableName(table);
         }
@@ -323,8 +322,8 @@ class QueryBuilder {
         let match = /^(.*?)(?:i:\s+as\s+| +)([\w.-]+)$/ig.exec(column);
         if (match !== null) {
           result.push(
-            this.db.quoteColumnName(match[1]) + ' AS ' +
-            this.db.quoteColumnName(match[2]),
+              this.db.quoteColumnName(match[1]) + ' AS ' +
+              this.db.quoteColumnName(match[2]),
           );
           continue;
         }
@@ -332,7 +331,7 @@ class QueryBuilder {
       }
     }
 
-    return select + ' ' + result.join(', ');
+    return (select + ' ' + result.join(', ')).trim();
   }
 
   /***
@@ -343,30 +342,31 @@ class QueryBuilder {
    */
   build(query, parameters = {}) {
     let params = helper.empty(parameters)
-      ? query.getParams()
-      : helper.merge(parameters, query.getParams());
+        ? query.getParams()
+        : helper.merge(parameters, query.getParams());
 
     let clauses = [];
 
     clauses.push(
-      this.buildSelect(
-        query.getSelect(),
-        params,
-        query.getDistinct(),
-        query.getSelectOption(),
-      ),
-      this.buildFrom(query.getFrom(), params),
-      //buildJoin
-      this.buildWhere(query.getWhere(), params),
-      this.buildGroupBy(query.getGroupBy()),
-      this.buildHaving(query.getHaving(), params),
+        this.buildSelect(
+            query.getSelect(),
+            params,
+            query.getDistinct(),
+            query.getSelectOption(),
+        ),
+        this.buildFrom(query.getFrom(), params),
+        //buildJoin
+        this.buildWhere(query.getWhere(), params),
+        this.buildGroupBy(query.getGroupBy()),
+        this.buildHaving(query.getHaving(), params),
     );
     clauses = clauses.filter(value => value !== '');
     let sql = clauses.join(this.separator);
+
     sql = this.buildOrderByAndLimit(sql,
-      query.getOrderBy(),
-      query.getLimit(),
-      query.getOffset()
+        query.getOrderBy(),
+        query.getLimit(),
+        query.getOffset(),
     );
 
     return {sql, params};
@@ -401,7 +401,8 @@ class QueryBuilder {
    * @returns {boolean}
    */
   hasOffset(offset) {
-    return helper.instanceOf(offset, Expression) || (helper.isNumber(offset) && String(offset) !== '0')
+    return helper.instanceOf(offset, Expression) ||
+        (helper.isNumber(offset) && String(offset) !== '0');
   }
 }
 
