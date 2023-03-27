@@ -40,6 +40,63 @@ let result = await query.select(['id', 'name'])
 .all(db)
 ```
 
+#### Query Order By
+Support query methods:
+* addOrderBy
+* orderBy
+
+String mode:
+```js
+const query = new Query();
+let result = await query.select(['id', 'name'])
+.from('users')
+.orderBy("name DESC, id ASC")
+.all(db)
+```
+
+Array mode:
+```js
+const query = new Query();
+let result = await query.select(['id', 'name'])
+.from('users')
+.orderBy(["name DESC", "id ASC"])
+.all(db)
+```
+
+Object mode:
+```js
+let result = await query.select(['id', 'name'])
+.from('users')
+.addOrderBy({name: "desc"})
+.all(db)
+```
+
+Expression mode:
+```js
+let expression1 = new Expression('SUBSTR(name, 3, 40) DESC, id ASC');
+let result = await query.select(['id', 'name'])
+.from('users')
+.query.andOrderBy(expression1)
+.all(db)
+```
+
+Order class mode:
+```js
+let order1 = new Order('column_name', Order.SORT_DESC);
+let result = await query.select(['id', 'name'])
+.from('users')
+.query.andOrderBy(order1)
+.all(db)
+```
+Or combined mode the array
+```js
+let order1 = new Order('column_name', Order.SORT_DESC);
+let result = await query.select(['id', 'name'])
+.from('users')
+.query.andOrderBy([order1, "id DESC"])
+.all(db)
+```
+
 #### Migration usage
 * create migrate `node node_modules/bin/dba migrate/create <db> <name migration>`
 * commit migrate `node node_modules/bin/dba migrate/up <db> <count option>`
