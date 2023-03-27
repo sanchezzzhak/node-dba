@@ -76,7 +76,7 @@ Expression mode:
 let expression1 = new Expression('SUBSTR(name, 3, 40) DESC, id ASC');
 let result = await query.select(['id', 'name'])
 .from('users')
-.query.andOrderBy(expression1)
+.query.addOrderBy(expression1)
 .all(db)
 ```
 
@@ -85,7 +85,7 @@ Order class mode:
 let order1 = new Order('column_name', Order.SORT_DESC);
 let result = await query.select(['id', 'name'])
 .from('users')
-.query.andOrderBy(order1)
+.query.addOrderBy(order1)
 .all(db)
 ```
 Or combined mode the array
@@ -93,7 +93,7 @@ Or combined mode the array
 let order1 = new Order('column_name', Order.SORT_DESC);
 let result = await query.select(['id', 'name'])
 .from('users')
-.query.andOrderBy([order1, "id DESC"])
+.query.addOrderBy([order1, "id DESC"])
 .all(db)
 ```
 
