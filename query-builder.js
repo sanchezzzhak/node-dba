@@ -19,6 +19,7 @@ const {
   ConjunctionConditionBuilder,
   ExistsConditionBuilder,
   NotConditionBuilder,
+  BetweenConditionBuilder,
 } = require('./builders');
 
 const PARAM_PREFIX = ':qp';
@@ -52,6 +53,7 @@ class QueryBuilder {
       'ExistsCondition': ExistsConditionBuilder,
       'NotCondition': NotConditionBuilder,
       'SimpleCondition': SimpleConditionBuilder,
+      'BetweenCondition': BetweenConditionBuilder,
     };
   }
 
@@ -154,9 +156,11 @@ class QueryBuilder {
   createConditionFromArray(condition) {
     if (Array.isArray(condition) && helper.isset(condition[0])) {
       let operator = condition.shift().toUpperCase();
-      return (helper.isset(this.conditionMap[operator])
-        ? new this.conditionMap[operator](operator, condition)
-        : new SimpleCondition(operator, condition));
+
+      if (helper.isset(this.conditionMap[operator])) {
+        return new this.conditionMap[operator](operator, condition);
+      }
+      return new SimpleCondition(operator, condition);
     }
 
     return new HashCondition(condition);
@@ -341,10 +345,7 @@ class QueryBuilder {
    * @param {object} parameters
    */
   build(query, parameters = {}) {
-    let params = helper.empty(parameters)
-        ? query.getParams()
-        : helper.merge(parameters, query.getParams());
-
+    let params = helper.merge(parameters ?? {}, query.getParams());
     let clauses = [];
 
     clauses.push(
@@ -380,8 +381,8 @@ class QueryBuilder {
    * @param {{}} params - passed by reference
    * @returns {string}
    */
-  bindParam(value, params) {
-    let placeholderName = PARAM_PREFIX + params.length;
+  bindParam(value, params = {}) {
+    let placeholderName = PARAM_PREFIX + helper.count(params);
     params[placeholderName] = value;
     return placeholderName;
   }

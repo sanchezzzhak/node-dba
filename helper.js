@@ -90,6 +90,12 @@ exports.unique = function (value, index, self) {
   return self.indexOf(value) === index;
 };
 
+exports.count = function(params) {
+  return Array.isArray(params) ? params.length
+      : (typeof params === 'object')
+      ? Object.keys(params).length: 0
+}
+
 /**
  * @param arr1 {Array}
  * @returns {*}

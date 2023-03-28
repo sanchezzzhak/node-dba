@@ -13,6 +13,18 @@ class BetweenCondition extends Expression
 
   constructor(operator, operands) {
     super();
+    this.#operator = operator;
+    this.#column = operands[0];
+    this.#intervalStart = operands[1];
+    this.#intervalEnd = operands[2];
+  }
+
+  get intervalStart() {
+    return this.#intervalStart;
+  }
+
+  get intervalEnd() {
+    return this.#intervalEnd;
   }
 
   /**
@@ -32,6 +44,6 @@ class BetweenCondition extends Expression
   get column(){
     return this.#column;
   }
-
-
 }
+
+module.exports = BetweenCondition;

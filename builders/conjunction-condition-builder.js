@@ -11,7 +11,6 @@ class ConjunctionConditionBuilder extends ExpressionBuilder
    */
   buildExpressionsFrom(condition, params) {
     let result = [];
-
     (condition.expressions ?? []).forEach(condition => {
       if(Array.isArray(condition)) {
         condition = this.queryBuilder.buildCondition(condition, params);
@@ -33,8 +32,9 @@ class ConjunctionConditionBuilder extends ExpressionBuilder
    * @returns {string|*}
    */
   build(expression, params) {
+
     let parts = this.buildExpressionsFrom(expression, params);
-    if (helper.empty(params)) {
+    if (helper.empty(parts)) {
       return '';
     }
     if (parts.length === 1) {

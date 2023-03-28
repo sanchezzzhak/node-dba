@@ -45,8 +45,6 @@ const result = await query.select(['id', 'name'])
 
 
 
-
-
 #### Migration usage
 * create migrate `node node_modules/bin/dba migrate/create <db> <name migration>`
 * commit migrate `node node_modules/bin/dba migrate/up <db> <count option>`

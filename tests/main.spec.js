@@ -6,6 +6,20 @@ DBA.loadConfigsForDir(__dirname + '/config/db');
 const TIMEOUT = 20000;
 const PG = 'pg';
 
+/**
+ *
+ * @param {string} expectSql
+ * @param {string} equalSql
+ * @returns {void|*}
+ */
+const expectSql = (expectSql, equalSql) => {
+  return expect(
+      expectSql.replace(/\s+/g, ' '),
+  ).to.equal(
+      equalSql.replace(/\s+/g, ' '),
+  );
+};
+
 describe('tests connections', function() {
   this.timeout(TIMEOUT);
 
@@ -27,8 +41,6 @@ describe('tests connections', function() {
     query.select(['column1', 'column2']).from('customer');
     expect(db.constructor.getDriverName).to.equal('pg');
     let sql = query.createCommand(db).getRawSql();
-    console.log({sql});
-
     expect('SELECT "column1", "column2" FROM "customer"').to.equal(sql);
   });
 
@@ -146,10 +158,14 @@ describe('tests connections', function() {
     equal(query.getWhere());
 
     query.from(['profiles']);
-
     let db = DBA.instance(PG);
-    let sql = query.createCommand(db).getRawSql();
-    expect(`SELECT * FROM "profiles" WHERE ((id = 1) AND (name = 'something')) OR (age = 33)`).equal(sql);
+
+    expectSql(`SELECT *
+               FROM "profiles"
+               WHERE ((id = 1) AND (name = 'something'))
+                  OR (age = 33)`,
+        query.createCommand(db).getRawSql(),
+    );
   });
 
   it('test filter hash where for Query', function() {
@@ -169,38 +185,68 @@ describe('tests connections', function() {
     expect(condition).to.deep.equal(query.getWhere());
   });
 
-  it('test filter array where for Query', function() {
-    let condition = ['like', 'name', 'Odyssey'];
-    let query = new Query();
-    query.filterWhere(condition);
-    expect(condition).to.deep.equal(query.getWhere());
+  describe('tests filter array where for Query', function() {
+    const db = DBA.instance(PG);
 
-    query.andFilterWhere(['between', 'id', null, null]);
-    expect(condition).to.deep.equal(query.getWhere());
-    query.orFilterWhere(['not between', 'id', null, null]);
-    expect(condition).to.deep.equal(query.getWhere());
+    it('filterWhere (simple like condition)', function() {
+      const query = new Query();
+      query.from('user');
+      query.filterWhere(['like', 'name', 'Odyssey']);
+      expectSql(
+            `SELECT *
+             FROM "user"
+             WHERE "name" LIKE 'Odyssey'`,
+          query.createCommand(db).getRawSql(),
+      );
+    });
 
-    query.andFilterWhere(['in', 'id', []]);
-    expect(condition).to.deep.equal(query.getWhere());
+    it('andFilterWhere (simple condition, between condition)', function() {
+      const query = new Query();
+      query.from('user');
+      query.filterWhere(['like', 'name', 'Odyssey']);
+      query.andFilterWhere(['between', 'id', 10, 20]);
 
-    query.andFilterWhere(['not in', 'id', []]);
-    expect(condition).to.deep.equal(query.getWhere());
+      expectSql(`SELECT *
+                 FROM "user"
+                 WHERE ("name" LIKE 'Odyssey')
+                   AND ("id" BETWEEN 10 AND 20)`,
+          query.createCommand(db).getRawSql(),
+      );
+    });
 
-    query.andFilterWhere(['like', 'id', '']);
-    expect(condition).to.deep.equal(query.getWhere());
+    it('orFilterWhere (simple condition, not between condition)', function() {
+      const query = new Query();
+      query.from('user');
+      query.filterWhere(['like', 'name', 'Odyssey']);
+      query.orFilterWhere(['not between', 'id', 10, 20]);
 
-    query.andFilterWhere(['or like', 'id', '']);
-    expect(condition).to.deep.equal(query.getWhere());
+      expectSql(`SELECT *
+                 FROM "user"
+                 WHERE ("name" LIKE 'Odyssey')
+                   OR ("id" NOT BETWEEN 10 AND 20)`,
+          query.createCommand(db).getRawSql(),
+      );
+    });
 
-    query.andFilterWhere(['not like', 'id', '   ']);
-    expect(condition).to.deep.equal(query.getWhere());
-
-    query.andFilterWhere(['or not like', 'id', null]);
-    expect(condition).to.deep.equal(query.getWhere());
-
-    query.andFilterWhere(['or', ['eq', 'id', null], ['eq', 'id', []]]);
-    expect(condition).to.deep.equal(query.getWhere());
+    it('all variants filter where', function(){
+      const query = new Query();
+      query.from('user');
+      query.filterWhere(['like', 'name', 'Odyssey']);
+      query.orFilterWhere(['not between', 'id', 10, 20]);
+      query.orFilterWhere(['not between', 'id', null, null]);
+      query.andFilterWhere(['in', 'id', []]);
+      query.andFilterWhere(['not in', 'id', []]);
+      query.andFilterWhere(['like', 'id', '']);
+      query.andFilterWhere(['or like', 'id', '']);
+      query.andFilterWhere(['not like', 'id', '   ']);
+      query.andFilterWhere(['or not like', 'id', null]);
+      query.andFilterWhere(['or', ['eq', 'id', null], ['eq', 'id', []]]);
+      expectSql('condition',
+          query.createCommand(db).getRawSql()
+      );
+    })
   });
+
 
   it('test filter having hash for Query', function() {
     let query = new Query();
@@ -268,7 +314,9 @@ describe('tests connections', function() {
 
     let db = DBA.instance(PG);
     let sql = query.createCommand(db).getRawSql();
-    expect(`SELECT * FROM "users" GROUP BY "team", "company", "age"`).equal(sql);
+    expectSql(`SELECT *
+               FROM "users"
+               GROUP BY "team", "company", "age"`, sql);
   });
 
   it('test order by Expression for Query', function() {
@@ -279,20 +327,21 @@ describe('tests connections', function() {
 
     let expression1 = new Expression('SUBSTR(name, 3, 4) DESC, x ASC');
     query.orderBy(expression1);
-    sql = query.createCommand(db).getRawSql();
-    expect('SELECT * FROM "users" ORDER BY SUBSTR(name, 3, 4) DESC, x ASC').
-    to.
-    deep.
-    equal(sql);
+
+    expectSql(`SELECT *
+               FROM "users"
+               ORDER BY SUBSTR(name, 3, 4) DESC, x ASC`,
+        query.createCommand(db).getRawSql(),
+    );
 
     let expression2 = new Expression('SUBSTR(name, 893, 4) DESC');
     query.addOrderBy(expression2);
-    sql = query.createCommand(db).getRawSql();
-    expect('SELECT * FROM "users" ORDER BY SUBSTR(name, 3, 4) DESC, x ASC, SUBSTR(name, 893, 4) DESC').
-    to.
-    deep.
-    equal(sql);
 
+    expectSql(`SELECT *
+               FROM "users"
+               ORDER BY SUBSTR(name, 3, 4) DESC, x ASC, SUBSTR(name, 893, 4) DESC`,
+        query.createCommand(db).getRawSql(),
+    );
   });
 
   it('test order by for Query', function() {
@@ -303,36 +352,37 @@ describe('tests connections', function() {
     query.orderBy('team');
 
     let sql = query.createCommand(db).getRawSql();
-    expect('SELECT * FROM "users" ORDER BY "team" ASC').to.deep.equal(sql);
+    expectSql(`SELECT *
+               FROM "users"
+               ORDER BY "team" ASC`, sql);
 
     query.addOrderBy('company');
     sql = query.createCommand(db).getRawSql();
 
-    expect('SELECT * FROM "users" ORDER BY "team" ASC, "company" ASC').
-    to.
-    deep.
-    equal(sql);
+    expectSql(`SELECT *
+               FROM "users"
+               ORDER BY "team" ASC, "company" ASC`, sql);
 
     query.addOrderBy('age');
     sql = query.createCommand(db).getRawSql();
-    expect('SELECT * FROM "users" ORDER BY "team" ASC, "company" ASC, "age" ASC').
-    to.
-    deep.
-    equal(sql);
+    expectSql(
+          `SELECT *
+           FROM "users"
+           ORDER BY "team" ASC, "company" ASC, "age" ASC`, sql);
 
     query.addOrderBy({'age': 'DESC'});
     sql = query.createCommand(db).getRawSql();
-    expect('SELECT * FROM "users" ORDER BY "team" ASC, "company" ASC, "age" DESC').
-    to.
-    deep.
-    equal(sql);
+    expectSql(
+          `SELECT *
+           FROM "users"
+           ORDER BY "team" ASC, "company" ASC, "age" DESC`, sql);
 
     query.addOrderBy('age ASC, company DESC');
     sql = query.createCommand(db).getRawSql();
-    expect('SELECT * FROM "users" ORDER BY "team" ASC, "company" DESC, "age" ASC').
-    to.
-    deep.
-    equal(sql);
+    expectSql(
+          `SELECT *
+           FROM "users"
+           ORDER BY "team" ASC, "company" DESC, "age" ASC`, sql);
   });
 
 });
