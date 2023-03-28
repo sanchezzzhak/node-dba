@@ -11,6 +11,8 @@ const {
   ExistsCondition,
   NotCondition,
   BetweenCondition,
+  InCondition,
+  LikeCondition
 } = require('./conditions');
 
 const {
@@ -20,6 +22,8 @@ const {
   ExistsConditionBuilder,
   NotConditionBuilder,
   BetweenConditionBuilder,
+  InConditionBuilder,
+  LikeConditionBuilder,
 } = require('./builders');
 
 const PARAM_PREFIX = ':qp';
@@ -54,18 +58,26 @@ class QueryBuilder {
       'NotCondition': NotConditionBuilder,
       'SimpleCondition': SimpleConditionBuilder,
       'BetweenCondition': BetweenConditionBuilder,
+      'InCondition': InConditionBuilder,
+      'LikeCondition': LikeConditionBuilder,
     };
   }
 
   getDefaultConditionMap() {
     return {
+      'NOT': NotCondition,
       'AND': ConjunctionCondition,
       'OR': ConjunctionCondition,
-      'NOT EXISTS': ExistsCondition,
-      'EXISTS': ExistsCondition,
-      'NOT': NotCondition,
       'BETWEEN': BetweenCondition,
       'NOT BETWEEN': BetweenCondition,
+      'IN': InCondition,
+      'NOT IN': InCondition,
+      'EXISTS': ExistsCondition,
+      'NOT EXISTS': ExistsCondition,
+      'LIKE': LikeCondition,
+      'NOT LIKE': LikeCondition,
+      'OR LIKE': LikeCondition,
+      'OR NOT LIKE': LikeCondition,
     };
   }
 

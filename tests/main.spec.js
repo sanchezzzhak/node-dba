@@ -223,12 +223,12 @@ describe('tests connections', function() {
       expectSql(`SELECT *
                  FROM "user"
                  WHERE ("name" LIKE 'Odyssey')
-                   OR ("id" NOT BETWEEN 10 AND 20)`,
+                    OR ("id" NOT BETWEEN 10 AND 20)`,
           query.createCommand(db).getRawSql(),
       );
     });
 
-    it('all variants filter where', function(){
+    it('all combinations filterWhere where orFilterWhere', function() {
       const query = new Query();
       query.from('user');
       query.filterWhere(['like', 'name', 'Odyssey']);
@@ -237,16 +237,18 @@ describe('tests connections', function() {
       query.andFilterWhere(['in', 'id', []]);
       query.andFilterWhere(['not in', 'id', []]);
       query.andFilterWhere(['like', 'id', '']);
-      query.andFilterWhere(['or like', 'id', '']);
+      query.andFilterWhere(['or', ['in', 'id', 500], ['in', 'id', [50, 301]]]);
       query.andFilterWhere(['not like', 'id', '   ']);
       query.andFilterWhere(['or not like', 'id', null]);
       query.andFilterWhere(['or', ['eq', 'id', null], ['eq', 'id', []]]);
-      expectSql('condition',
-          query.createCommand(db).getRawSql()
+      expectSql(`SELECT *
+                 FROM "user"
+                 WHERE (("name" LIKE 'Odyssey') OR ("id" NOT BETWEEN 10 AND 20))
+                   AND ((0=1) OR ("id" IN (50, 301)))`,
+          query.createCommand(db).getRawSql(),
       );
-    })
+    });
   });
-
 
   it('test filter having hash for Query', function() {
     let query = new Query();

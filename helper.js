@@ -43,6 +43,11 @@ exports.instanceOf = function (obj, right) {
     right);
 };
 
+exports.isTraversable = function(obj) {
+  return Array.isArray(obj)
+      || (obj !== null && ['function', 'object'].includes(typeof obj));
+};
+
 exports.isNumber = function (key) {
   return /^\d+$/.test(key);
 }

@@ -3,6 +3,8 @@ const ExistsConditionBuilder = require('./exists-condition-builder');
 const SimpleConditionBuilder = require('./simple-condition-builder');
 const QueryExpressionBuilder = require('./query-expression-builder');
 const BetweenConditionBuilder = require('./between-condition-builder');
+const InConditionBuilder = require('./in-condition-builder');
+const LikeConditionBuilder = require('./like-condition-builder');
 
 module.exports = {
   QueryExpressionBuilder,
@@ -10,4 +12,6 @@ module.exports = {
   ExistsConditionBuilder,
   ConjunctionConditionBuilder,
   BetweenConditionBuilder,
+  InConditionBuilder,
+  LikeConditionBuilder,
 };
