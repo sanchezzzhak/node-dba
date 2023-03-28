@@ -89,7 +89,10 @@ class Schema extends Base {
    */
   quoteTableName(name) {
 
-    if (/^\(.+\)$/.test(name) || name.indexOf('{{') !== -1) {
+    if (!name) {
+      return  '';
+    }
+    if (/^\(.+\)$/i.test(name) || name && name.indexOf('{{') !== -1) {
       return name;
     }
     if (name.indexOf('.') === -1) {

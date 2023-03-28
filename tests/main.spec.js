@@ -45,25 +45,33 @@ describe('tests connections', function() {
   });
 
   it('test select * for Query', function() {
+    let db = DBA.instance(PG);
     let query = new Query();
     query.select('*');
     expect({'*': '*'}).to.deep.equal(query.getSelect());
     expect(false).to.equal(query.getDistinct());
     expect('').to.equal(query.getSelectOption());
+    expectSql(`SELECT *`, query.createCommand(db).getRawSql());
   });
 
   it('test select distinct for Query', function() {
+    let db = DBA.instance(PG);
     let query = new Query();
     query.select('id, name', 'something').distinct(true);
     expect({'id': 'id', 'name': 'name'}).to.deep.equal(query.getSelect());
     expect(true).to.equal(query.getDistinct());
     expect('something').to.equal(query.getSelectOption());
+    expectSql(`SELECT DISTINCT something "id", "name"`,
+        query.createCommand(db).getRawSql());
   });
 
   it('test addSelect for Query', function() {
+    let db = DBA.instance(PG);
     let query = new Query();
     query.addSelect('email');
     expect({'email': 'email'}).to.deep.equal(query.getSelect());
+    expectSql(`SELECT "email"`,
+        query.createCommand(db).getRawSql());
 
     query = new Query();
     query.addSelect(['*', 'abc']);
@@ -73,9 +81,14 @@ describe('tests connections', function() {
     deep.
     equal(query.getSelect());
 
+    expectSql(`SELECT *, "abc", "bca"`,
+        query.createCommand(db).getRawSql());
+
+
   });
 
   it('test select + addSelect for Query', function() {
+    let db = DBA.instance(PG);
     let query = new Query();
     query.select('id, name');
     query.addSelect('email');
@@ -83,20 +96,32 @@ describe('tests connections', function() {
     to.
     deep.
     equal(query.getSelect());
+    expectSql(`SELECT "id", "name", "email"`,
+        query.createCommand(db).getRawSql());
+
   });
 
   it('test select alias for Query', function() {
+    let db = DBA.instance(PG);
     let query = new Query();
     query.addSelect(['field1 as a', 'field 1 as b']);
     expect({'a': 'field1', 'b': 'field 1'}).to.deep.equal(query.getSelect());
+    expectSql(`SELECT "field1" AS "a", "field 1" AS "b"`,
+        query.createCommand(db).getRawSql());
+
 
     query = new Query();
     query.addSelect(['field1 a', 'field 1 b']);
     expect({'a': 'field1', 'b': 'field 1'}).to.deep.equal(query.getSelect());
+    expectSql(`SELECT "field1" AS "a", "field 1" AS "b"`,
+        query.createCommand(db).getRawSql());
+
 
     query = new Query();
     query.select('name, name, name as X, name as X');
     expect({'name': 'name', 'X': 'name'}).to.deep.equal(query.getSelect());
+    expectSql(`SELECT "name", "name" AS "X"`,
+        query.createCommand(db).getRawSql());
 
     query = (new Query()).select('id');
     expect({'id': 'id'}).to.deep.equal(query.getSelect());
@@ -105,9 +130,12 @@ describe('tests connections', function() {
     to.
     deep.
     equal(query.getSelect());
+    expectSql(`SELECT "id", "brand_id"`,
+        query.createCommand(db).getRawSql());
   });
 
   it('test select function for Query', function() {
+    let db = DBA.instance(PG);
     let query = (new Query()).select({
       'prefix': 'LEFT(name, 7)',
       'prefix_key': 'LEFT(name, 7)',
@@ -118,23 +146,35 @@ describe('tests connections', function() {
       'prefix_key': 'LEFT(name, 7)',
       'test': 'LEFT(name,8)',
     }).to.deep.equal(query.getSelect());
+    expectSql(`SELECT LEFT(name, 7) AS "prefix",
+     LEFT(name, 7) AS "prefix_key",
+     LEFT(name,8) AS "test"`,
+        query.createCommand(db).getRawSql());
   });
 
-  it('test from Expression', function() {
+  it('test from Expression (as is)', function() {
+    let db = DBA.instance(PG);
     let query = new Query();
     let tables = new Expression('(SELECT id,name FROM user) u');
     query.from(tables);
     assert.instanceOf(query.getFrom()[0], Expression);
+
+    expectSql(`SELECT * FROM (SELECT id,name FROM user) u`,
+        query.createCommand(db).getRawSql());
   });
 
   it('test from for Query', function() {
+    let db = DBA.instance(PG);
     let query = new Query();
     query.from('user');
     expect(['user']).to.deep.equal(query.getFrom());
+    expectSql('SELECT * FROM "user"', query.createCommand(db).getRawSql());
 
     query = new Query();
     query.from('user as u');
     expect(['user as u']).to.deep.equal(query.getFrom());
+    expectSql(`SELECT * FROM "user" AS "u"`, query.createCommand(db).getRawSql());
+
   });
 
   it('test where for Query', function() {

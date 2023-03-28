@@ -238,6 +238,11 @@ class QueryBuilder {
     for (let i in tables) {
       let table = tables[i];
 
+      if (helper.instanceOf(table, Expression)) {
+        tables[i] = this.buildExpression(table, params)
+        continue;
+      }
+
       if (helper.instanceOf(table, Query)) {
         let {sql, params} = this.build(table, params);
         tables[i] = '(' + sql + ') ' + this.db.quoteTableName(i);
@@ -253,10 +258,10 @@ class QueryBuilder {
         continue;
       }
 
-      if (table.indexOf('(') === -1) {
+      if (helper.strncmp(table, '(') === false) {
         let tableWithAlias = this.extractAlias(table);
-        if (tableWithAlias !== null) {
-          tables[i] = this.db.quoteTableName(tableWithAlias[1]) + ' ' +
+        if (tableWithAlias ) {
+          tables[i] = this.db.quoteTableName(tableWithAlias[0]) + ' AS ' +
               this.db.quoteTableName(tableWithAlias[1]);
         } else {
           tables[i] = this.db.quoteTableName(table);
@@ -271,12 +276,13 @@ class QueryBuilder {
    * Extracts table alias if there is one or returns null
    *
    * @param table
-   * @returns {array|null}
+   * @returns {string}
    */
   extractAlias(table) {
-    let matches = [...table.matchAll('/^(.*?)(?:\s+as|)\s+([^ ]+)$/i')];
-    if (matches.length) {
-      return matches;
+    let regex = /^(.*?)(?:\s+as|)\s+([^ ]+)$/i
+    let match = regex.exec(table);
+    if (match) {
+      return [match[1], match[2]];
     }
     return null;
   }
