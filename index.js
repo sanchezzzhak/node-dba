@@ -5,6 +5,7 @@ const Expression = require('./expression');
 
 const SUPPORT_DRIVERS = [
   'pg',
+  'clickhouse'
 ];
 
 const configMap = {};
@@ -67,7 +68,6 @@ class DBA {
       let name = path.parse(fileName).name;
       configMap[name] = require(dirPath + '/' + fileName);
     }));
-    
   }
   
 }
