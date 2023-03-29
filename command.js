@@ -10,7 +10,7 @@ class Command extends Base {
   sql;
 
   constructor(config) {
-    super(config);
+    super();
     this.setOwnProperties(config)
     this.bindValues(config.params ?? {});
   }
@@ -53,12 +53,8 @@ class Command extends Base {
       }, String(this.sql));
     }
 
-    let sql = [];
-    String(this.sql).split('?').forEach((value, index) => {
-      sql.push(String(params[index] ?? '') + value);
-    });
 
-    return sql.join();
+    return this.sql;
   }
 
   bindValues(params) {

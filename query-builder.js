@@ -275,12 +275,12 @@ class QueryBuilder {
   /**
    * Extracts table alias if there is one or returns null
    *
-   * @param table
-   * @returns {string}
+   * @param entity
+   * @returns {array|null}
    */
-  extractAlias(table) {
+  extractAlias(entity) {
     let regex = /^(.*?)(?:\s+as|)\s+([^ ]+)$/i
-    let match = regex.exec(table);
+    let match = regex.exec(entity);
     if (match) {
       return [match[1], match[2]];
     }
@@ -341,11 +341,11 @@ class QueryBuilder {
       }
 
       if (column.indexOf('(') === -1) {
-        let match = /^(.*?)(?:i:\s+as\s+| +)([\w.-]+)$/ig.exec(column);
-        if (match !== null) {
+        let columnWithAlias = this.extractAlias(column);
+        if (columnWithAlias !== null) {
           result.push(
-              this.db.quoteColumnName(match[1]) + ' AS ' +
-              this.db.quoteColumnName(match[2]),
+              this.db.quoteColumnName(columnWithAlias[0]) + ' AS ' +
+              this.db.quoteColumnName(columnWithAlias[1]),
           );
           continue;
         }

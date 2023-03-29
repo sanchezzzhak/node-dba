@@ -1,19 +1,16 @@
 const EventEmitter = require('eventemitter2');
 
 class Base extends EventEmitter {
-  
-  constructor(config = {}) {
-    super();
-    this.setOwnProperties(config)
-  }
-  
+
   /**
    * DI set own properties
-   * @param {*} config
+   * @param {{}} config
    */
   setOwnProperties(config = {}) {
-    for (let key in config) {
-      this.hasOwnProperty(key) && (this[key] = config[key]);
+    for (let [key, value] of Object.entries(config)) {
+      if (this.hasOwnProperty(key)) {
+        this[key] = value;
+      }
     }
   }
 }
