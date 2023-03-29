@@ -16,7 +16,9 @@ const
     RULE_PARAMS = 'params',
     RULE_OFFSET = 'offset',
     RULE_DISTINCT = 'distinct',
-    RULE_INDEX_BY = 'indexBy';
+    RULE_INDEX_BY = 'indexBy',
+    RULE_WITH = 'with',
+    RULE_WITH_JOIN = 'withJoin';
 
 class Query extends Base {
 
@@ -25,7 +27,7 @@ class Query extends Base {
 
   constructor(config = {}) {
     super();
-    this.setOwnProperties(config)
+    this.setOwnProperties(config);
   }
 
   /*** getter object methods */
@@ -44,6 +46,20 @@ class Query extends Base {
    */
   getHaving() {
     return this.rules[RULE_HAVING] ?? '';
+  }
+
+  /**
+   * Gets the UNION part of the query.
+   */
+  getUnion() {
+    return this.rules[RULE_UNION] ?? '';
+  }
+
+  /**
+   * Gets the with relations.
+   */
+  getWith() {
+    return this.rules[RULE_WITH] ?? '';
   }
 
   /**
@@ -101,7 +117,7 @@ class Query extends Base {
    * @param {BaseConnection|null} db
    * @return {Command}
    */
-  createCommand(db= null) {
+  createCommand(db = null) {
     db = db ?? this.db;
     const {sql, params} = db.getQueryBuilder().build(this);
     return db.createCommand(sql, params);
@@ -204,6 +220,7 @@ class Query extends Base {
   /**
    * Adds additional parameters to be bound to the query.
    * @param params
+   * @return {Query}
    */
   addParams(params) {
     if (helper.empty(params)) {
@@ -220,6 +237,7 @@ class Query extends Base {
   /**
    * Sets the LIMIT part of the query.
    * @param {number|Expression} limit
+   * @return {Query}
    */
   limit(limit) {
     this.rules[RULE_LIMIT] = limit;
@@ -229,6 +247,7 @@ class Query extends Base {
   /**
    * Sets the OFFSET part of the query.
    * @param {number|Expression} offset
+   * @return {Query}
    */
   offset(offset) {
     this.rules[RULE_OFFSET] = offset;
@@ -237,23 +256,33 @@ class Query extends Base {
 
   /**
    * Sets the OFFSET part of the query.
+   * @public
    * @param {string|object|Expression} columns
+   * @return {Query}
    */
   orderBy(columns) {
     this.rules[RULE_ORDER_BY] = void 0;
     return this.addOrderBy(columns);
   }
 
+  /**
+   * Added the ORDER BY part of the query.
+   *
+   * @public
+   * @param columns
+   * @returns {Query}
+   */
   addOrderBy(columns) {
     if (!this.rules[RULE_ORDER_BY]) {
       this.rules[RULE_ORDER_BY] = [];
     }
-    this.rules[RULE_ORDER_BY] = this.rules[RULE_ORDER_BY].concat(this.normalizeOrderBy(columns));
+    this.rules[RULE_ORDER_BY] = this.rules[RULE_ORDER_BY].concat(
+        this.normalizeOrderBy(columns));
     return this;
   }
 
   /**
-   * Adds additional ORDER BY columns to the query.
+   * Added additional ORDER BY columns to the query.
    * @param {string|object|Expression} columns
    * @returns {*}
    */
@@ -283,6 +312,13 @@ class Query extends Base {
     return result;
   }
 
+  /**
+   * group key index for rows
+   *
+   * @public
+   * @param {string} column
+   * @returns {Query}
+   */
   indexBy(column) {
     this.rules[RULE_INDEX_BY] = column;
     return this;
@@ -290,6 +326,8 @@ class Query extends Base {
 
   /**
    * Sets the HAVING part of the query.
+   *
+   *  @public
    * @param {array|{}} condition
    * @param {{}} params
    * @returns {Query}
@@ -338,19 +376,48 @@ class Query extends Base {
     return this;
   }
 
+  andFilterCompare(name, value , defaultOperator = '=') {
+    let operator;
+    let rawValue = String(value);
+    let regex = /^(<>|>=|>|<=|<|=)/;
+    let match = regex.exec(rawValue);
+    if (match) {
+      operator = match[1];
+      rawValue = rawValue.substr(rawValue, operator.length);
+    } else {
+      operator = defaultOperator;
+    }
+
+    return this.andFilterWhere([operator, name, rawValue]);
+  }
+
+  /**
+   * Added [and] having part of the query.
+   *
+   * @public
+   * @param {*} condition
+   * @param {{}} params
+   */
   andHaving(condition, params = {}) {
     this.#andRules(RULE_HAVING, condition, params);
     return this;
   }
 
+  /**
+   * Added [or] having part of the query.
+   *
+   * @public
+   * @param {*} condition
+   * @param {{}} params
+   */
   orHaving(condition, params = {}) {
     this.#orRules(RULE_HAVING, condition, params);
     return this;
   }
 
   /**
-   * added [or] rules to query
-   * 
+   * Added [or] rules to query
+   *
    * @private
    * @param {string} ruleType
    * @param {*} condition
@@ -364,9 +431,10 @@ class Query extends Base {
     }
     this.addParams(params);
   }
+
   /**
-   * added [and] rules to query
-   * 
+   * Added [and] rules to query
+   *
    * @private
    * @param {string} ruleType
    * @param {*} condition
@@ -388,8 +456,8 @@ class Query extends Base {
   }
 
   /**
-   * Set where condition
-   * 
+   * Set WHERE condition part of the query.
+   *
    * @public
    * @param condition
    * @param {{}} params
@@ -401,8 +469,8 @@ class Query extends Base {
   }
 
   /**
-   * Added [and] where condition
-   * 
+   * Added [and] where condition part of the query.
+   *
    * @public
    * @param {{}|array} condition
    * @param {{}} params
@@ -412,9 +480,9 @@ class Query extends Base {
     this.#andRules(RULE_WHERE, condition, params);
     return this;
   }
-  
+
   /**
-   * Added [or] where condition
+   * Added [or] where condition part of the query.
    *
    * @public
    * @param {{}|array} condition
@@ -427,7 +495,7 @@ class Query extends Base {
   }
 
   /**
-   * Where condition (excludes empty conditions from the query)
+   * Set WHERE condition (excludes empty conditions from the query)
    *
    * @public
    * @param {{}|array} condition
@@ -526,10 +594,11 @@ class Query extends Base {
 
   /**
    * @private
+   * @param selectExpression
    * @param db
    * @returns {Command}
    */
-  #createScalarCommand(db = null) {
+  createScalarCommand(selectExpression, db = null) {
     if (
         !this.getDistinct() &&
         helper.empty(
@@ -558,16 +627,16 @@ class Query extends Base {
       return command;
     }
 
-    const query = new Query({
-      db: db ?? this.db
-    })
-
+    return (new Query({db: db ?? this.db}))
+      .select([selectExpression])
+      .from({c: this})
+      .createCommand();
   }
 
   #queryScalar(selectExpression, db = null) {
-    return this.#createScalarCommand(db ?? this.db).queryScalar();
+    return this.createScalarCommand(selectExpression, db ?? this.db).
+    queryScalar();
   }
-
 
   column(db = null) {
 
@@ -637,7 +706,7 @@ class Query extends Base {
     let command = this.createCommand(db ?? this.db);
     let params = this.getParams();
     command.sql = `SELECT EXISTS(${command.sql})`;
-    command.bindValues(params)
+    command.bindValues(params);
 
     return Boolean(command.queryScalar());
   }
