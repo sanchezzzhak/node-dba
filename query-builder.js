@@ -24,6 +24,7 @@ const {
   BetweenConditionBuilder,
   InConditionBuilder,
   LikeConditionBuilder,
+  HashConditionBuilder,
 } = require('./builders');
 
 const PARAM_PREFIX = ':qp';
@@ -60,6 +61,7 @@ class QueryBuilder {
       'BetweenCondition': BetweenConditionBuilder,
       'InCondition': InConditionBuilder,
       'LikeCondition': LikeConditionBuilder,
+      'HashCondition': HashConditionBuilder,
     };
   }
 
@@ -168,7 +170,6 @@ class QueryBuilder {
   createConditionFromArray(condition) {
     if (Array.isArray(condition) && helper.isset(condition[0])) {
       let operator = condition.shift().toUpperCase();
-
       if (helper.isset(this.conditionMap[operator])) {
         return new this.conditionMap[operator](operator, condition);
       }

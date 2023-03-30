@@ -6,7 +6,8 @@ class SimpleCondition extends Expression {
   #value;
 
   constructor(operator, operands) {
-    if (operands.length !== 2) {
+    console.log({operator, operands})
+    if (!operands || operands.length !== 2) {
       throw new Error("Operator 'operator' requires two operands.");
     }
     super();

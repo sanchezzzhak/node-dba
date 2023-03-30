@@ -5,6 +5,7 @@ const QueryExpressionBuilder = require('./query-expression-builder');
 const BetweenConditionBuilder = require('./between-condition-builder');
 const InConditionBuilder = require('./in-condition-builder');
 const LikeConditionBuilder = require('./like-condition-builder');
+const HashConditionBuilder = require('./hash-condition-builder');
 
 module.exports = {
   QueryExpressionBuilder,
@@ -14,4 +15,5 @@ module.exports = {
   BetweenConditionBuilder,
   InConditionBuilder,
   LikeConditionBuilder,
+  HashConditionBuilder
 };

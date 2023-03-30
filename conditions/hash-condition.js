@@ -1,7 +1,7 @@
 const Expression = require('../expression');
 
-class HashCondition extends Expression
-{
+class HashCondition extends Expression {
+
   #hash;
 
   /**

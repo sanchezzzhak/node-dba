@@ -376,6 +376,12 @@ class Query extends Base {
     return this;
   }
 
+  /**
+   * @param {string} name
+   * @param {string} value
+   * @param {string} defaultOperator
+   * @return {Query}
+   */
   andFilterCompare(name, value , defaultOperator = '=') {
     let operator;
     let rawValue = String(value);

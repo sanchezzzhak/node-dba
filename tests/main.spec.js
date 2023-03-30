@@ -123,7 +123,7 @@ describe('tests connections', function() {
 
 
     query = new Query();
-    query.select('name, name, name as X, name as X');
+    query.select('name,name, name as X, name as X');
     expect({'name': 'name', 'X': 'name'}).to.deep.equal(query.getSelect());
     expectSql(`SELECT "name", "name" AS "X"`,
         query.createCommand(db).getRawSql());
@@ -296,10 +296,12 @@ describe('tests connections', function() {
   });
 
   it('test filter having hash for Query', function() {
+    const db = DBA.instance(PG);
     let query = new Query();
-    let condition = {id: 0};
+    let condition = {id: 10};
+    query.from('user')
     query.filterHaving({
-      'id': 0,
+      'id': 10,
       'title': '   ',
       'author_ids': [],
     });
@@ -310,6 +312,11 @@ describe('tests connections', function() {
 
     query.orFilterHaving({'name': ''});
     expect(condition).to.deep.equal(query.getHaving());
+
+    expectSql(`SELECT * FROM "user" HAVING "id"=10`,
+        query.createCommand(db).getRawSql(),
+    );
+
   });
 
   it('test filter having for Query', function() {

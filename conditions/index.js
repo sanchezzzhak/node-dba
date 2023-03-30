@@ -1,7 +1,7 @@
 
 
 const SimpleCondition = require('./simple-condition');
-const HashCondition = require('./simple-condition');
+const HashCondition = require('./hash-condition');
 const ConjunctionCondition = require('./conjunction-condition');
 const ExistsCondition = require('./exists-condition');
 const NotCondition = require('./not-condition');
