@@ -7,6 +7,14 @@ class Schema extends BaseSchema
   constructor(config) {
     super(config);
   }
+
+  async loadTableSchema(name) {
+    const table = new TableSchema();
+
+
+    return null;
+  }
+
 }
 
 module.exports = Schema;

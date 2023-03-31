@@ -108,7 +108,11 @@ class QueryBuilder {
   }
 
   /**
-   * generate from part sql
+   * Creates an FROM SQL statement.
+   *
+   * @param tables
+   * @param params
+   * @return {string}
    */
   buildFrom(tables, params) {
     if (helper.empty(tables)) {
@@ -119,11 +123,24 @@ class QueryBuilder {
     return 'FROM ' + tables.join(', ');
   }
 
+  /**
+   * Creates an WHERE SQL statement.
+   *
+   * @param condition
+   * @param params
+   * @return {string}
+   */
   buildWhere(condition, params) {
     let where = this.buildCondition(condition, params);
     return (where === '' || where === void 0) ? '' : 'WHERE ' + where;
   }
 
+  /**
+   * Creates an GROUP BY SQL statement.
+   *
+   * @param {{}} columns
+   * @return {string}
+   */
   buildGroupBy(columns) {
     if (helper.empty(columns)) {
       return '';
@@ -145,6 +162,12 @@ class QueryBuilder {
     return 'GROUP BY ' + result.join(COLUMN_SEPARATOR);
   }
 
+  /**
+   *
+   * @param condition
+   * @param {{}} params
+   * @return {string}
+   */
   buildHaving(condition, params) {
     let having = this.buildCondition(condition, params);
     return (having === '' || having === void 0) ? '' : 'HAVING ' + having;
@@ -152,9 +175,10 @@ class QueryBuilder {
 
   /**
    * Creates a condition based on column-value pairs.
-   * @param {array|Object} condition
+   *
+   * @param {array|{}} condition
    * @param {{}} params
-   * @returns {string|*}
+   * @returns {string}
    */
   buildCondition(condition, params) {
     if (helper.empty(condition)) {
@@ -180,6 +204,12 @@ class QueryBuilder {
     return new HashCondition(condition);
   }
 
+  /**
+   * Creates an ORDER BY SQL statement.
+   *
+   * @param {array|Object|string|Expression|Order} columns
+   * @return {string}
+   */
   buildOrderBy(columns) {
     if (helper.empty(columns)) {
       return '';
@@ -202,6 +232,15 @@ class QueryBuilder {
         : '';
   }
 
+  /**
+   * Creates an ORDER BY and LIMIT and OFFSET SQL statement.
+   *
+   * @param {string} sql
+   * @param orderBy
+   * @param {number} limit
+   * @param {number} offset
+   * @return {string}
+   */
   buildOrderByAndLimit(sql, orderBy, limit, offset) {
     orderBy = this.buildOrderBy(orderBy);
     if (orderBy !== '') {
@@ -215,6 +254,8 @@ class QueryBuilder {
   }
 
   /**
+   * Creates an LIMIT and OFFSET SQL statement.
+   *
    * @param {number} limit
    * @param {number} offset
    * @return string the LIMIT and OFFSET clauses
@@ -411,6 +452,7 @@ class QueryBuilder {
 
   /**
    * Checks to see if the given limit is effective.
+   *
    * @param limit
    * @returns {boolean}
    */
@@ -420,6 +462,7 @@ class QueryBuilder {
 
   /**
    * Checks to see if the given offset is effective.
+   *
    * @param offset
    * @returns {boolean}
    */
@@ -428,14 +471,32 @@ class QueryBuilder {
         (helper.isNumber(offset) && String(offset) !== '0');
   }
 
-  update(table, columns, condition, params) {
-    [sets, params] = this.#prepareUpdateSets(table, columns, params);
+  /**
+   * Creates an UPDATE SQL statement.
+   *
+   * @param {string} table
+   * @param {Object}columns
+   * @param {Object|String|array} condition
+   * @param {Object} conditionParams
+   * @return {string}
+   */
+  update(table, columns, condition, conditionParams) {
+    let [sets, params] = this.#prepareUpdateSets(table, columns,
+        conditionParams);
     const sql = `UPDATE ${this.db.getTableSchema(table)} SET ${sets.join(
         sets)}`;
     const where = this.buildWhere(condition, params);
     return where === '' ? sql : `${sql} ${where}`;
   }
 
+  /**
+   * Prepares a `SET` parts for an `UPDATE` SQL statement.
+   *
+   * @param {string} table
+   * @param {Object} columns
+   * @param {Object} params
+   * @return {{sets: [], params: *}}
+   */
   #prepareUpdateSets(table, columns, params) {
     const sets = [];
     const tableSchema = this.db.getTableSchema(table);
@@ -443,13 +504,15 @@ class QueryBuilder {
 
     for (let [column, value] of Object.entries(columns)) {
       let placeholder;
-      value = helper.isset(columnSchemas[column]) ? columnSchemas[column].dbTypecast(value) : value;
+      value = helper.isset(columnSchemas[column])
+          ? columnSchemas[column].dbTypecast(value)
+          : value;
       if (helper.instanceOf(value, Expression)) {
         placeholder = this.buildExpression(value, params);
       } else {
         placeholder = this.bindParam(value, params);
       }
-      sets.push(`${this.db.quoteColumnName(column)}=${placeholder}`)
+      sets.push(`${this.db.quoteColumnName(column)}=${placeholder}`);
     }
     return {sets, params};
   }

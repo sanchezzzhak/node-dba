@@ -15,8 +15,11 @@ const EVENTS = {
 }
 
 class BaseConnection extends Base {
-  
+
+  tablePrefix = '';
+
   EVENTS = EVENTS;
+
   
   /**
    * get driver name for currently connection
@@ -107,9 +110,6 @@ class BaseConnection extends Base {
     return new ActiveQuery({db: this}, model)
   }
 
-  getTableSchema(table) {
-    return null;
-  }
 
 }
 

@@ -93,6 +93,19 @@ exports.words = function (text) {
 }
 
 /**
+ * @param {string} text
+ * @return {string}
+ */
+exports.ucfirst = function(text) {
+  return text.charAt(0).toUpperCase() + text.substr(1);
+};
+
+exports.lcfirst = function(text) {
+  return text.charAt(0).toLowerCase() + text.substr( 1 );
+};
+
+
+/**
  * compare arrays a with b and get everything in b
  * @param a
  * @param b

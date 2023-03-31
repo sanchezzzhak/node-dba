@@ -1,13 +1,24 @@
 const Base = require('./base');
 const QueryBuilder = require('./query-builder');
- const helper = require('./helper');
+const helper = require('./helper');
+
+const TYPE_SCHEMA = 'schema';
 
 class Schema extends Base {
   /*** {Connection} @type */
   db;
 
-  tableQuoteCharacter = "'";
+  tableQuoteCharacter = '\'';
   columnQuoteCharacter = '"';
+
+  #schemaNames = [];
+  #tableNames = [];
+  #tableMeteData = {};
+  #serverVersion = null;
+  /***
+   * @property {QueryBuilder}
+   */
+  #builder;
 
   constructor(config = {}) {
     super(config);
@@ -15,7 +26,10 @@ class Schema extends Base {
   }
 
   getQueryBuilder() {
-    return new QueryBuilder(this.db);
+    if (!this.#builder) {
+      return new QueryBuilder(this.db);
+    }
+    return this.#builder;
   }
 
   quoteValue(value) {
@@ -26,7 +40,9 @@ class Schema extends Base {
       return value;
     }
 
-    return "'" + helper.addcslashes(value.replaceAll("'", "''"), "\\000\n\r\\032") + "'";
+    return '\'' +
+        helper.addcslashes(value.replaceAll('\'', '\'\''), '\\000\n\r\\032') +
+        '\'';
   }
 
   /**
@@ -65,8 +81,8 @@ class Schema extends Base {
    */
   quoteSimpleColumnName(name) {
     return name === '*' || name.indexOf(this.columnQuoteCharacter) !== -1
-      ? name
-      : this.columnQuoteCharacter + name + this.columnQuoteCharacter;
+        ? name
+        : this.columnQuoteCharacter + name + this.columnQuoteCharacter;
   }
 
   /**
@@ -78,8 +94,8 @@ class Schema extends Base {
    */
   quoteSimpleTableName(name) {
     return name.indexOf(this.tableQuoteCharacter) !== -1
-      ? name
-      : this.tableQuoteCharacter + name + this.tableQuoteCharacter;
+        ? name
+        : this.tableQuoteCharacter + name + this.tableQuoteCharacter;
   }
 
   /**
@@ -91,7 +107,7 @@ class Schema extends Base {
   quoteTableName(name) {
 
     if (!name) {
-      return  '';
+      return '';
     }
     if (/^\(.+\)$/i.test(name) || name && name.indexOf('{{') !== -1) {
       return name;
@@ -117,6 +133,61 @@ class Schema extends Base {
     return name.split('.');
   }
 
+  getTableSchema(name, refresh) {
+    return this.getTableMetadata(name, TYPE_SCHEMA, refresh);
+  }
+
+  async getTableMetadata(name, type, refresh) {
+    //todo add cache schema
+    const rawName = this.getRawTableName(name);
+
+    if (!helper.isset(this.#tableMeteData[rawName])) {
+      await this.loadTableMetadataFromCache(rawName);
+    }
+    if (refresh || !(helper.isset(this.#tableMeteData[rawName]) &&
+        helper.isset(this.#tableMeteData[rawName][type]))
+    ) {
+
+      if (this.#tableMeteData[rawName] === void 0) {
+        this.#tableMeteData[rawName] = {};
+      }
+      if (this.#tableMeteData[rawName][type] === void 0) {
+        this.#tableMeteData[rawName][type] = {};
+      }
+      this.#tableMeteData[rawName][type] = await this[`loadTable${helper.ucfirst(
+          type)}`](rawName);
+      await this.saveTableMetadataToCache(rawName);
+    }
+
+    return this.#tableMeteData[rawName][type];
+  }
+
+  async loadTableSchema(name) {
+    throw new Error(
+        'need implementation loadTableSchema() method for current class');
+  }
+
+  async loadTableMetadataFromCache(name) {
+
+  }
+
+  async saveTableMetadataToCache(name) {
+
+  }
+
+  getRawTableName(name) {
+    if (helper.strncmp(name, '{{') !== false) {
+      return name.replace(/[{]{2}(.*?)[}]{2}/, '$1').
+      replace('%', this.db.tablePrefix);
+    }
+    return String(name);
+  }
+
+  getSchemaMetadata(schema, type, refresh) {
+    const metadata = [];
+
+    return metadata;
+  }
 
 }
 

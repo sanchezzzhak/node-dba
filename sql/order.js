@@ -39,7 +39,7 @@ class Order {
 
   /**
    *
-   * @param columns
+   * @param {array|Object|string|Expression|Order} columns
    * @returns {Order[]}
    */
   static from(columns) {

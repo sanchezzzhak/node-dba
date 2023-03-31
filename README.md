@@ -1,5 +1,6 @@
 # node-dba (this project in process developing dont not use in production)
-Micro engine for active record layout for database (MySQL, Postgress, ClickHouse)
+* Micro engine for active record layout for database (MySQL, Postgress, ClickHouse)
+
 -----
 
 #### Config Supports json or js files

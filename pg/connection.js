@@ -141,7 +141,7 @@ class PgConnection extends BaseConnection {
       db: this
     })
   }
-  
+
 }
 
 module.exports = PgConnection;

@@ -11,7 +11,7 @@ class Command extends Base {
 
   constructor(config) {
     super();
-    this.setOwnProperties(config)
+    this.setOwnProperties(config);
     this.bindValues(config.params ?? {});
   }
 
@@ -41,7 +41,7 @@ class Command extends Base {
       }
       if (typeof value == 'number') {
         params[name] = value;
-      } else if (/^\d[\d.]*$/.test(value) ) {
+      } else if (/^\d[\d.]*$/.test(value)) {
         params[name] = value;
       }
     }
@@ -52,7 +52,6 @@ class Command extends Base {
         return params[match] ?? match;
       }, String(this.sql));
     }
-
 
     return this.sql;
   }
@@ -109,18 +108,19 @@ class Command extends Base {
   }
 
   update(table, columns, condition = '', params = {}) {
-    this.setSql(this.db.getQueryBuilder().update(table, condition, params));
-    return this.bindValues(params)
+    this.setSql(
+        this.db.getQueryBuilder().update(table, columns, condition, params));
+    return this.bindValues(params);
   }
 
   setSql(sql) {
     this.sql = sql;
-    return this
+    return this;
   }
 
   delete(table, condition = '', params = {}) {
     this.setSql(this.db.getQueryBuilder().delete(table, condition, params));
-    return this.bindValues(params)
+    return this.bindValues(params);
   }
 
   upsert($table, insertColumns, updateColumns = true, params = {}) {
