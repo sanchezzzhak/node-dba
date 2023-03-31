@@ -1,4 +1,4 @@
-const BaseConnection = require('../сonnection');
+const BaseConnection = require('../connection');
 const Schema = require('./schema');
 const {Pool, Client} = require('pg');
 

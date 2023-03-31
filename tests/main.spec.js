@@ -1,6 +1,6 @@
 const {should, assert, expect} = require('chai');
 const {DBA, Query, Expression} = require('../index');
-
+const CarRotate = require('./models/car-rotate');
 DBA.loadConfigsForDir(__dirname + '/config/db');
 
 const TIMEOUT = 20000;
@@ -19,6 +19,24 @@ const expectSql = (expectSql, equalSql) => {
       equalSql.replace(/\s+/g, ' '),
   );
 };
+
+describe('active records', function() {
+  this.timeout(TIMEOUT);
+  it('test tableName', async function() {
+    expect(CarRotate.tableName()).to.equal('car_rotate')
+  })
+
+  it('test getDb', async function() {
+    let db = DBA.instance(PG);
+    CarRotate.getDb()
+    expect(CarRotate.getDb()).to.equal(db)
+
+  })
+
+
+
+
+})
 
 describe('tests connections', function() {
   this.timeout(TIMEOUT);

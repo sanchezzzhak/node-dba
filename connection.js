@@ -1,6 +1,7 @@
 const Base = require('./base');
 const QueryBuilder = require('./query-builder');
 const Command = require('./command');
+const ActiveQuery = require('./active-query');
 
 
 const EVENTS = {
@@ -101,7 +102,15 @@ class BaseConnection extends Base {
   getSchema() {
     throw new Error('need implementation getSchema() method for current class')
   }
-  
+
+  getActiveQuery(model) {
+    return new ActiveQuery({db: this}, model)
+  }
+
+  getTableSchema(table) {
+    return null;
+  }
+
 }
 
 module.exports = BaseConnection;

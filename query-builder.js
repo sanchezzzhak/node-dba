@@ -12,7 +12,7 @@ const {
   NotCondition,
   BetweenCondition,
   InCondition,
-  LikeCondition
+  LikeCondition,
 } = require('./conditions');
 
 const {
@@ -28,6 +28,7 @@ const {
 } = require('./builders');
 
 const PARAM_PREFIX = ':qp';
+const COLUMN_SEPARATOR = ', ';
 
 class QueryBuilder {
   /**
@@ -141,7 +142,7 @@ class QueryBuilder {
       }
     }
 
-    return 'GROUP BY ' + result.join(', ');
+    return 'GROUP BY ' + result.join(COLUMN_SEPARATOR);
   }
 
   buildHaving(condition, params) {
@@ -196,7 +197,9 @@ class QueryBuilder {
       results.push(column + ' ' + order.direction);
     }
 
-    return results.length > 0 ? 'ORDER BY ' + results.join(', ') : '';
+    return results.length > 0
+        ? 'ORDER BY ' + results.join(COLUMN_SEPARATOR)
+        : '';
   }
 
   buildOrderByAndLimit(sql, orderBy, limit, offset) {
@@ -212,8 +215,8 @@ class QueryBuilder {
   }
 
   /**
-   * @param int $limit
-   * @param int $offset
+   * @param {number} limit
+   * @param {number} offset
    * @return string the LIMIT and OFFSET clauses
    */
   buildLimit(limit, offset) {
@@ -231,7 +234,7 @@ class QueryBuilder {
   /**
    * Quotes table names passed.
    * @param {array} tables
-   * @param params
+   * @param {Object} params
    * @returns {*}
    * @todo added expresion.build
    */
@@ -240,7 +243,7 @@ class QueryBuilder {
       let table = tables[i];
 
       if (helper.instanceOf(table, Expression)) {
-        tables[i] = this.buildExpression(table, params)
+        tables[i] = this.buildExpression(table, params);
         continue;
       }
 
@@ -261,7 +264,7 @@ class QueryBuilder {
 
       if (helper.strncmp(table, '(') === false) {
         let tableWithAlias = this.extractAlias(table);
-        if (tableWithAlias ) {
+        if (tableWithAlias) {
           tables[i] = this.db.quoteTableName(tableWithAlias[0]) + ' AS ' +
               this.db.quoteTableName(tableWithAlias[1]);
         } else {
@@ -276,11 +279,11 @@ class QueryBuilder {
   /**
    * Extracts table alias if there is one or returns null
    *
-   * @param entity
+   * @param {string} entity
    * @returns {array|null}
    */
   extractAlias(entity) {
-    let regex = /^(.*?)(?:\s+as|)\s+([^ ]+)$/i
+    let regex = /^(.*?)(?:\s+as|)\s+([^ ]+)$/i;
     let match = regex.exec(entity);
     if (match) {
       return [match[1], match[2]];
@@ -424,6 +427,33 @@ class QueryBuilder {
     return helper.instanceOf(offset, Expression) ||
         (helper.isNumber(offset) && String(offset) !== '0');
   }
+
+  update(table, columns, condition, params) {
+    [sets, params] = this.#prepareUpdateSets(table, columns, params);
+    const sql = `UPDATE ${this.db.getTableSchema(table)} SET ${sets.join(
+        sets)}`;
+    const where = this.buildWhere(condition, params);
+    return where === '' ? sql : `${sql} ${where}`;
+  }
+
+  #prepareUpdateSets(table, columns, params) {
+    const sets = [];
+    const tableSchema = this.db.getTableSchema(table);
+    const columnSchemas = tableSchema !== null ? tableSchema.columns : {};
+
+    for (let [column, value] of Object.entries(columns)) {
+      let placeholder;
+      value = helper.isset(columnSchemas[column]) ? columnSchemas[column].dbTypecast(value) : value;
+      if (helper.instanceOf(value, Expression)) {
+        placeholder = this.buildExpression(value, params);
+      } else {
+        placeholder = this.bindParam(value, params);
+      }
+      sets.push(`${this.db.quoteColumnName(column)}=${placeholder}`)
+    }
+    return {sets, params};
+  }
+
 }
 
 module.exports = QueryBuilder;

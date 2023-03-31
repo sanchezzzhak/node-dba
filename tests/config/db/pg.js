@@ -5,7 +5,7 @@ const postgressConfig = {
   username: 'postgres',
   password: 'mysql',
   database: 'test-dba',
-  port: 5432
+  port: 5432,
 }
 
 module.exports = postgressConfig;

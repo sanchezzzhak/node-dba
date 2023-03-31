@@ -21,7 +21,8 @@ class Schema extends Base {
   quoteValue(value) {
     if (typeof value == 'number') {
       return value;
-    } else if (/^\d[\d.]*$/.test(value)) {
+    }
+    if (/^\d[\d.]*$/.test(value)) {
       return value;
     }
 

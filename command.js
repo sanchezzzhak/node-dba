@@ -109,11 +109,18 @@ class Command extends Base {
   }
 
   update(table, columns, condition = '', params = {}) {
-
+    this.setSql(this.db.getQueryBuilder().update(table, condition, params));
+    return this.bindValues(params)
   }
 
-  delete(table, condition = '', $params = {}) {
+  setSql(sql) {
+    this.sql = sql;
+    return this
+  }
 
+  delete(table, condition = '', params = {}) {
+    this.setSql(this.db.getQueryBuilder().delete(table, condition, params));
+    return this.bindValues(params)
   }
 
   upsert($table, insertColumns, updateColumns = true, params = {}) {

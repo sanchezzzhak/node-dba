@@ -66,10 +66,30 @@ exports.strncmp = function (str, search, pos) {
  * @returns {null|string}
  */
 exports.className = function (obj) {
-  if (typeof obj === 'object') {
-    return obj.constructor.name;
+  let className = null;
+  // is called class
+  if (typeof obj === 'object' && obj.constructor) {
+     className = obj.constructor.name;
   }
-  return null;
+  // is static class
+  if (className === null) {
+    className = obj.toString().split ('(' || /s+/)[0]
+    .split (' ' || /s+/)[1];
+  }
+  return className;
+}
+
+exports.camelize = function(text) {
+  const a = text.toLowerCase()
+  .replace(/[-_\s.]+(.)?/g, (_, c) => c ? c.toUpperCase() : '');
+  return a.substring(0, 1).toLowerCase() + a.substring(1);
+}
+
+exports.words = function (text) {
+  const parts = text
+  .replace(/((?<=\p{Ll})\p{Lu}|(?<=\p{L})\p{Lu}(?=\p{Ll}))/u, ' $1');
+  return parts.split(/\s/)
+  .filter(val => val !=='')
 }
 
 /**
