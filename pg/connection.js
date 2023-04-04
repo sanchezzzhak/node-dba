@@ -34,8 +34,7 @@ class PgConnection extends BaseConnection {
    * @param {ConfigPostgres} config
    */
   constructor(config) {
-    super();
-    
+    super(config);
     if (!config) {
       return;
     }
@@ -111,19 +110,21 @@ class PgConnection extends BaseConnection {
     pool.on('error', (err, client) => {
       this.emit(this.EVENTS.ERROR, {err, client});
     });
+
     this.#master = pool;
-    
-    try {
-      let result = await pool.query('SELECT version()');
-    } catch (err) {
-      this.emit(this.EVENTS.ERROR, {err});
-    }
-    
+
     return new Promise((resolve, reject) => {
-      pool.connect((err, client, release) => {
+      pool.connect( async (err, client, release) => {
         if (err) {
           return reject(err);
         }
+
+        try {
+          let result = await pool.query('SELECT version()');
+        } catch (err) {
+          this.emit(this.EVENTS.ERROR, {err});
+        }
+
         // add attach to events (later)
         
         release();
@@ -140,6 +141,11 @@ class PgConnection extends BaseConnection {
     return new Schema({
       db: this
     })
+  }
+
+  async execute(sql) {
+    await this.connect()
+    return this.#master.query('sql');
   }
 
 }

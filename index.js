@@ -45,15 +45,13 @@ class DBA {
     }
     
     try {
-      instances[configName] = new (
-        require('./' + driver + '/connection')
-      )(config);
-      
+      const Connection = require(`./${driver}/connection`);
+       instances[configName] = new Connection(config);
     } catch (err) {
-      throw new Error(err);
+       throw err;
     }
-    
-    return instances[configName];
+
+    return instances[configName] ?? {};
   }
   
   /**
@@ -73,7 +71,5 @@ class DBA {
 }
 
 module.exports = {
-  DBA,
-  Query,
-  Expression
+  DBA, Query, Expression
 };

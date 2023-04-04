@@ -10,11 +10,14 @@ class Schema extends Base {
 
   tableQuoteCharacter = '\'';
   columnQuoteCharacter = '"';
-
-  #schemaNames = [];
-  #tableNames = [];
-  #tableMeteData = {};
-  #serverVersion = null;
+  
+  builder;
+  columnSchema;
+  schemaNames = {};
+  tableNames = {};
+  tableMeteData = {};
+  serverVersion = null;
+  
   /***
    * @property {QueryBuilder}
    */
@@ -26,10 +29,10 @@ class Schema extends Base {
   }
 
   getQueryBuilder() {
-    if (!this.#builder) {
+    if (!this.builder) {
       return new QueryBuilder(this.db);
     }
-    return this.#builder;
+    return this.builder;
   }
 
   quoteValue(value) {
@@ -141,30 +144,31 @@ class Schema extends Base {
     //todo add cache schema
     const rawName = this.getRawTableName(name);
 
-    if (!helper.isset(this.#tableMeteData[rawName])) {
+    if (!helper.isset(this.tableMeteData[rawName])) {
       await this.loadTableMetadataFromCache(rawName);
     }
-    if (refresh || !(helper.isset(this.#tableMeteData[rawName]) &&
-        helper.isset(this.#tableMeteData[rawName][type]))
+    if (refresh || !(helper.isset(this.tableMeteData[rawName]) &&
+        helper.isset(this.tableMeteData[rawName][type]))
     ) {
 
-      if (this.#tableMeteData[rawName] === void 0) {
-        this.#tableMeteData[rawName] = {};
+      if (this.tableMeteData[rawName] === void 0) {
+        this.tableMeteData[rawName] = {};
       }
-      if (this.#tableMeteData[rawName][type] === void 0) {
-        this.#tableMeteData[rawName][type] = {};
+      if (this.tableMeteData[rawName][type] === void 0) {
+        this.tableMeteData[rawName][type] = {};
       }
-      this.#tableMeteData[rawName][type] = await this[`loadTable${helper.ucfirst(
+      this.tableMeteData[rawName][type] = await this[`loadTable${helper.ucfirst(
           type)}`](rawName);
       await this.saveTableMetadataToCache(rawName);
     }
 
-    return this.#tableMeteData[rawName][type];
+    return this.tableMeteData[rawName][type];
   }
 
   async loadTableSchema(name) {
     throw new Error(
-        'need implementation loadTableSchema() method for current class');
+        `${helper.className(
+            this)} need implementation loadTableSchema() method for current class`);
   }
 
   async loadTableMetadataFromCache(name) {
@@ -173,6 +177,26 @@ class Schema extends Base {
 
   async saveTableMetadataToCache(name) {
 
+  }
+
+  async getTableNames(schema, refresh = false) {
+    if ((this.tableNames && this.tableNames[schema]) || refresh) {
+      this.tableNames[schema] = await this.findTableNames(schema);
+    }
+    return this.tableNames[schema];
+  }
+
+  /**
+   * Returns all table names in the database.
+   * This method should be overridden by child classes in order to support this feature
+   * because the default implementation simply throws an exception.
+   *
+   * @param {string} schema
+   * @returns {Promise<void>|Promise<Object>}
+   */
+  async findTableNames(schema = '') {
+    throw new Error(
+        `${helper.className(this)} does not support fetching all table names.`);
   }
 
   getRawTableName(name) {

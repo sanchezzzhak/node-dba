@@ -127,6 +127,13 @@ class Command extends Base {
 
   }
 
+  async execute(){
+    const sql = this.getRawSql();
+    console.log({sql});
+
+    return await this.db.execute(sql)
+  }
+
 }
 
 module.exports = Command;
