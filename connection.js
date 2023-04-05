@@ -117,6 +117,11 @@ class BaseConnection extends Base {
     return new ActiveQuery({db: this}, model);
   }
 
+  /**
+   *
+   * @param {string} file
+   * @returns {QueryResult[]}
+   */
   async fileExecute(file) {
     const sqlLines = fs.readFileSync(file).
     toString().
@@ -126,9 +131,11 @@ class BaseConnection extends Base {
     map(val => val.trim()).
     filter(val => val !== '');
 
+    let result = [];
     for(let sql of sqlLines) {
-      await this.createCommand(sql).execute();
+      result.push(await this.createCommand(sql).execute());
     }
+    return result;
   }
 
   execute(sql) {

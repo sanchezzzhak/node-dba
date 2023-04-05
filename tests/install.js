@@ -8,10 +8,10 @@ const FILE_DUMP = __dirname + '/dumps/pg/dump.sql';
 (async () => {
   const db = DBA.instance('pg');
 
-  console.log('current version PG: %',
-      await db.createCommand('SELECT version()').execute()
+  console.log('current version PG: %s',
+      (await db.createCommand('SELECT version()').execute()).rows.shift().version
   );
-  // await db.fileExecute(FILE_DUMP);
+  await db.fileExecute(FILE_DUMP);
 //
 })();
 
