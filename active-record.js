@@ -63,7 +63,7 @@ class ActiveRecord extends Base {
    * @param {Object} params
    * @return {number}
    */
-  static deleteALL(condition, params = {}) {
+  static deleteAll(condition, params = {}) {
     return this.getDb().
     createCommand().
     delete(this.tableName(), condition, params).

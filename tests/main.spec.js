@@ -6,8 +6,6 @@ DBA.loadConfigsForDir(__dirname + '/config/db');
 const TIMEOUT = 20000;
 const PG = 'pg';
 
-return;
-
 /**
  *
  * @param {string} expectSql
@@ -25,20 +23,15 @@ const expectSql = (expectSql, equalSql) => {
 describe('active records', function() {
   this.timeout(TIMEOUT);
   it('test tableName', async function() {
-    expect(CarRotate.tableName()).to.equal('car_rotate')
-  })
+    expect(CarRotate.tableName()).to.equal('car_rotate');
+  });
 
   it('test getDb', async function() {
     let db = DBA.instance(PG);
-    CarRotate.getDb()
-    expect(CarRotate.getDb()).to.equal(db)
-
-  })
-
-
-
-
-})
+    CarRotate.getDb();
+    expect(CarRotate.getDb()).to.equal(db);
+  });
+});
 
 describe('tests connections', function() {
   this.timeout(TIMEOUT);
@@ -93,6 +86,7 @@ describe('tests connections', function() {
     let query = new Query({db});
     query.addSelect('email');
     expect({'email': 'email'}).to.deep.equal(query.getSelect());
+
     expectSql(`SELECT "email"`,
         query.createCommand().getRawSql());
 
@@ -106,7 +100,6 @@ describe('tests connections', function() {
 
     expectSql(`SELECT *, "abc", "bca"`,
         query.createCommand().getRawSql());
-
 
   });
 
@@ -134,13 +127,11 @@ describe('tests connections', function() {
     expectSql(`SELECT "field1" AS "a", "field 1" AS "b"`,
         query.createCommand(db).getRawSql());
 
-
     query = new Query();
     query.addSelect(['field1 a', 'field 1 b']);
     expect({'a': 'field1', 'b': 'field 1'}).to.deep.equal(query.getSelect());
     expectSql(`SELECT "field1" AS "a", "field 1" AS "b"`,
         query.createCommand(db).getRawSql());
-
 
     query = new Query();
     query.select('name,name, name as X, name as X');
@@ -180,11 +171,12 @@ describe('tests connections', function() {
   it('test from Expression (as is)', function() {
     let db = DBA.instance(PG);
     let query = new Query();
-    let tables = new Expression('(SELECT id,name FROM user) u');
+    let tables = new Expression('(SELECT id, name FROM user) u');
     query.from(tables);
     assert.instanceOf(query.getFrom()[0], Expression);
 
-    expectSql(`SELECT * FROM (SELECT id,name FROM user) u`,
+    expectSql(`SELECT *
+               FROM (SELECT id, name FROM user) u`,
         query.createCommand(db).getRawSql());
   });
 
@@ -198,7 +190,8 @@ describe('tests connections', function() {
     query = new Query();
     query.from('user as u');
     expect(['user as u']).to.deep.equal(query.getFrom());
-    expectSql(`SELECT * FROM "user" AS "u"`, query.createCommand(db).getRawSql());
+    expectSql(`SELECT *
+               FROM "user" AS "u"`, query.createCommand(db).getRawSql());
 
   });
 
@@ -233,7 +226,7 @@ describe('tests connections', function() {
     );
   });
 
-  it('test filter hash where for Query', function() {
+  it('test filter where hash for Query', function() {
     let query = new Query();
     let condition = {id: 0};
     query.filterWhere({
@@ -250,7 +243,7 @@ describe('tests connections', function() {
     expect(condition).to.deep.equal(query.getWhere());
   });
 
-  describe('tests filter array where for Query', function() {
+  describe('tests filter where array for Query', function() {
     const db = DBA.instance(PG);
 
     it('filterWhere (simple like condition)', function() {
@@ -313,13 +306,31 @@ describe('tests connections', function() {
           query.createCommand(db).getRawSql(),
       );
     });
+
+    it('filter where recursively', function() {
+      const query = new Query();
+      query.from('user');
+      query.filterWhere([
+        'and',
+        ['like', 'name', ''],
+        ['like', 'title', ''],
+        {'id': 1},
+        ['not', ['like', 'name', '']]]);
+
+      expectSql(`SELECT *
+                 FROM "user"
+                 WHERE "id"=1`,
+          query.createCommand(db).getRawSql(),
+      );
+    });
+
   });
 
   it('test filter having hash for Query', function() {
     const db = DBA.instance(PG);
     let query = new Query();
     let condition = {id: 10};
-    query.from('user')
+    query.from('user');
     query.filterHaving({
       'id': 10,
       'title': '   ',
@@ -333,44 +344,93 @@ describe('tests connections', function() {
     query.orFilterHaving({'name': ''});
     expect(condition).to.deep.equal(query.getHaving());
 
-    expectSql(`SELECT * FROM "user" HAVING "id"=10`,
+    expectSql(`SELECT *
+               FROM "user"
+               HAVING "id"=10`,
         query.createCommand(db).getRawSql(),
     );
 
   });
 
   it('test filter having for Query', function() {
+    const db = DBA.instance(PG);
     let query = new Query();
+    query.from('user');
+
     let condition = {'id': 0};
     query.filterHaving(condition);
     expect(condition).to.deep.equal(query.getHaving());
 
+    let sqlCheck = `SELECT *
+                    FROM "user"
+                    HAVING "id"=0`;
+
+    expectSql(sqlCheck,
+        query.createCommand(db).getRawSql(),
+    );
+
     query.andFilterHaving(['between', 'id', null, null]);
     expect(condition).to.deep.equal(query.getHaving());
+
+    expectSql(sqlCheck,
+        query.createCommand(db).getRawSql(),
+    );
 
     query.orFilterHaving(['not between', 'id', null, null]);
     expect(condition).to.deep.equal(query.getHaving());
 
+    expectSql(sqlCheck,
+        query.createCommand(db).getRawSql(),
+    );
+
     query.andFilterHaving(['in', 'id', []]);
     expect(condition).to.deep.equal(query.getHaving());
+
+    expectSql(sqlCheck,
+        query.createCommand(db).getRawSql(),
+    );
 
     query.andFilterHaving(['not in', 'id', []]);
     expect(condition).to.deep.equal(query.getHaving());
 
+    expectSql(sqlCheck,
+        query.createCommand(db).getRawSql(),
+    );
+
     query.andFilterHaving(['like', 'id', '']);
     expect(condition).to.deep.equal(query.getHaving());
+
+    expectSql(sqlCheck,
+        query.createCommand(db).getRawSql(),
+    );
 
     query.andFilterHaving(['or like', 'id', '']);
     expect(condition).to.deep.equal(query.getHaving());
 
+    expectSql(sqlCheck,
+        query.createCommand(db).getRawSql(),
+    );
+
     query.andFilterHaving(['not like', 'id', '   ']);
     expect(condition).to.deep.equal(query.getHaving());
+
+    expectSql(sqlCheck,
+        query.createCommand(db).getRawSql(),
+    );
 
     query.andFilterHaving(['or not like', 'id', null]);
     expect(condition).to.deep.equal(query.getHaving());
 
+    expectSql(sqlCheck,
+        query.createCommand(db).getRawSql(),
+    );
+
     query.andFilterHaving(['or', ['eq', 'id', null], ['eq', 'id', []]]);
     expect(condition).to.deep.equal(query.getHaving());
+
+    expectSql(sqlCheck,
+        query.createCommand(db).getRawSql(),
+    );
   });
 
   it('test group for Query', function() {
@@ -457,6 +517,20 @@ describe('tests connections', function() {
           `SELECT *
            FROM "users"
            ORDER BY "team" ASC, "company" DESC, "age" ASC`, sql);
+  });
+
+  it('test having', function() {
+    let db = DBA.instance(PG);
+    let query = new Query();
+    query.select('*');
+    query.from('users');
+    query.having('id = :id', {':id': 1});
+    query.andHaving('name = :name', {':name':'something'});
+    query.orHaving('age = :age', {':age':'30'});
+    expectSql(
+        `SELECT * FROM "users" HAVING ((id = 1) AND (name = 'something')) OR (age = 30)`,
+        query.createCommand(db).getRawSql(),
+    );
   });
 
 });

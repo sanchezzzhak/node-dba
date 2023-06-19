@@ -1,16 +1,17 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+const fs = require('node:fs');
+const path = require('node:path');
+const Query = require('./query');
+const Expression = require('./expression');
 
 const SUPPORT_DRIVERS = [
   'pg',
-  'clickhouse'
+  'clickhouse',
 ];
 
 const configMap = {};
 const instances = {};
 
 class DBA {
-  
   /**
    * get array support drivers for lib
    * @returns {[string]}
@@ -18,6 +19,7 @@ class DBA {
   static getSupportDrives() {
     return SUPPORT_DRIVERS;
   }
+
   /**
    * get db connection
    * @param {string} configName
@@ -27,31 +29,31 @@ class DBA {
     if (instances[configName] !== void 0) {
       return instances[configName];
     }
-    
+
     let config = configMap[configName];
     if (!config) {
       throw new Error(`Config "${configName}" not found or not load`);
     }
-    
+
     let driver = config['driver'];
     if (!driver) {
       throw new Error(`Not set section driver for config ${configName}`);
     }
-    
+
     if (!SUPPORT_DRIVERS.includes(driver)) {
       throw new Error(`Unknown ${driver} driver`);
     }
-    
+
     try {
       const Connection = require(`./${driver}/connection`);
-       instances[configName] = new Connection(config);
+      instances[configName] = new Connection(config);
     } catch (err) {
-       throw err;
+      throw err;
     }
 
     return instances[configName] ?? {};
   }
-  
+
   /**
    * load config for json or js files
    * @param dirPath
@@ -65,9 +67,9 @@ class DBA {
       configMap[name] = require(dirPath + '/' + fileName);
     }));
   }
-  
+
 }
 
-export default {
-  DBA
+module.exports = {
+  DBA, Query, Expression
 };

@@ -7,7 +7,7 @@ class LikeConditionBuilder extends ExpressionBuilder {
    * Method builds the raw SQL from the $expression that will not be additionally
    * escaped or quoted.
    *
-   * @param {LikeCondition} expression
+   * @param {LikeCondition|Expression} expression
    * @param {{}} params
    */
   build(expression, params) {

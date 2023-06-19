@@ -72,7 +72,7 @@ class ColumnSchema extends Base {
   }
 
   typecast(value) {
-    return undefined;
+    return void 0;
   }
 }
 

@@ -169,6 +169,7 @@ class QueryBuilder {
    * @return {string}
    */
   buildHaving(condition, params) {
+    console.log({condition})
     let having = this.buildCondition(condition, params);
     return (having === '' || having === void 0) ? '' : 'HAVING ' + having;
   }
@@ -184,10 +185,13 @@ class QueryBuilder {
     if (helper.empty(condition)) {
       return '';
     }
-    condition = this.createConditionFromArray(condition);
-    if (helper.instanceOf(condition, Expression)) {
-      return this.buildExpression(condition, params);
-    }
+
+     if (typeof condition === 'object' || Array.isArray(condition)) {
+      condition = this.createConditionFromArray(condition);
+      if (helper.instanceOf(condition, Expression)) {
+        return this.buildExpression(condition, params);
+      }
+     }
 
     return String(condition);
   }
@@ -247,7 +251,7 @@ class QueryBuilder {
       sql += this.separator + orderBy;
     }
     limit = this.buildLimit(limit, offset);
-    if (limit !== '') {
+    if (limit) {
       sql += this.separator + limit;
     }
     return sql;

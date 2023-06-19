@@ -13,6 +13,14 @@ exports.empty = function (...args) {
   );
 };
 
+exports.isEmpty = function (value) {
+  return value === '' || value === void 0 ||
+      (Array.isArray(value) && value.length === 0) ||
+      value === null ||
+      (typeof value === 'object' && Object.keys(value).length === 0) ||
+      (typeof value === 'string' && value.trim() === '');
+}
+
 exports.isString = function (str) {
   return typeof str === 'string' || str instanceof String;
 }
