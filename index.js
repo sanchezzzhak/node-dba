@@ -1,7 +1,5 @@
-const fs = require('node:fs');
-const path = require('node:path');
-const Query = require('./query');
-const Expression = require('./expression');
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 const SUPPORT_DRIVERS = [
   'pg',
@@ -70,6 +68,6 @@ class DBA {
   
 }
 
-module.exports = {
-  DBA, Query, Expression
+export default {
+  DBA
 };

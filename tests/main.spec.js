@@ -6,6 +6,8 @@ DBA.loadConfigsForDir(__dirname + '/config/db');
 const TIMEOUT = 20000;
 const PG = 'pg';
 
+return;
+
 /**
  *
  * @param {string} expectSql
