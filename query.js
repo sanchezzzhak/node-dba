@@ -377,24 +377,46 @@ class Query extends Base {
   }
 
   /**
+   * Adds a filtering condition for a specific column and allow the user to choose a filter operator.
+   *
+   * It adds an additional WHERE condition for the given field and determines the comparison operator
+   * based on the first few characters of the given value.
+   *
+   * - `<`: the column must be less than the given value.
+   * - `>`: the column must be greater than the given value.
+   * - `<=`: the column must be less than or equal to the given value.
+   * - `>=`: the column must be greater than or equal to the given value.
+   * - `<>`: the column must not be the same as the given value.
+   * - `=`: the column must be equal to the given value.
+   * - If none of the above operators is detected, the `$defaultOperator` will be used.
+   *
    * @param {string} name
    * @param {string} value
    * @param {string} defaultOperator
    * @return {Query}
    */
-  andFilterCompare(name, value , defaultOperator = '=') {
+  andFilterCompare(name, valueRaw , defaultOperator = '=') {
+    let {value, operator} = this.parseFilterCompare(valueRaw, defaultOperator);
+    return this.andFilterWhere([operator, name, value]);
+  }
+
+  parseFilterCompare(valueRaw, defaultOperator) {
     let operator;
-    let rawValue = String(value);
+    let value = String(valueRaw);
     let regex = /^(<>|>=|>|<=|<|=)/;
     let match = regex.exec(rawValue);
     if (match) {
       operator = match[1];
-      rawValue = rawValue.substr(rawValue, operator.length);
+      value = value.substr(operator.length);
     } else {
       operator = defaultOperator;
     }
+    return {operator, value};
+  }
 
-    return this.andFilterWhere([operator, name, rawValue]);
+  orFilterCompare(name, valueRaw, defaultOperator = 0) {
+    let {value, operator} = this.parseFilterCompare(valueRaw, defaultOperator);
+    return this.orFilterWhere([operator, name, value]);
   }
 
   /**
@@ -713,13 +735,29 @@ class Query extends Base {
     let params = this.getParams();
     command.sql = `SELECT EXISTS(${command.sql})`;
     command.bindValues(params);
-
     return Boolean(command.queryScalar());
   }
 
-  innerJoin(table, on, params) {
-
+  join(type, table, on, params) {
+    if (this.rules[RULE_JOIN] === void 0) {
+      this.rules[RULE_JOIN] = [];
+    }
+    this.rules[RULE_JOIN].push([type.toUpperCase(), table, on]);
     this.addParams(params);
+  }
+
+  rightJoin(table, on, params) {
+    this.join('RIGHT JOIN', table, on, params);
+    return this;
+  }
+
+  leftJoin(table, on, params) {
+    this.join('LEFT JOIN', table, on, params);
+    return this;
+  }
+
+  innerJoin(table, on, params) {
+    this.join('INNER JOIN', table, on, params);
     return this;
   }
   
