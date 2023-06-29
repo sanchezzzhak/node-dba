@@ -43,6 +43,7 @@ const result = await query.select(['id', 'name'])
 * [Where](docs/WHERE.MD)
 * [Order By](docs/ORDER_BY.MD)
 * [Group By](docs/GROUP_BY.MD)
+* [Having](docs/HAVING.MD)
 
 
 

@@ -41,6 +41,14 @@ class Query extends Base {
   }
 
   /**
+   * Gets the join parts of the query.
+   * @returns {string|Object}
+   */
+  getJoin() {
+    return this.rules[RULE_JOIN] ?? '';
+  }
+
+  /**
    * Gets the HAVING part of the query.
    * @returns {*|Object|Array|string}
    */
@@ -738,7 +746,7 @@ class Query extends Base {
     return Boolean(command.queryScalar());
   }
 
-  join(type, table, on, params) {
+  join(table, on, params, type= 'JOIN') {
     if (this.rules[RULE_JOIN] === void 0) {
       this.rules[RULE_JOIN] = [];
     }
@@ -747,17 +755,17 @@ class Query extends Base {
   }
 
   rightJoin(table, on, params) {
-    this.join('RIGHT JOIN', table, on, params);
+    this.join( table, on, params, 'RIGHT JOIN');
     return this;
   }
 
   leftJoin(table, on, params) {
-    this.join('LEFT JOIN', table, on, params);
+    this.join( table, on, params, 'LEFT JOIN');
     return this;
   }
 
   innerJoin(table, on, params) {
-    this.join('INNER JOIN', table, on, params);
+    this.join( table, on, params, 'INNER JOIN');
     return this;
   }
   

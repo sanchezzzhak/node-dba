@@ -124,6 +124,39 @@ class QueryBuilder {
   }
 
   /**
+   * Creates an JOIN SQL statement.
+   * @param joins
+   */
+  buildJoin(joins, params) {
+    if (helper.empty(joins)) {
+      return '';
+    }
+
+    joins = [].concat(joins);
+
+    for(let i=0, l = joins.length; i < l; i++){
+      let join = joins[i];
+      if (!Array.isArray(join)) {
+        throw new Error('join clause must be specified as an array of join type, join table, and optionally join condition.')
+      }
+      let joinType = join[0];
+      let table = join[1];
+      let tables = this.quoteTableNames([table], params);
+      table = tables[0];
+      joins[i] = joinType + ' ' + table
+      if (join[2]) {
+        let condition = this.buildCondition(join[2], params);
+        if (condition !== '') {
+          joins[i]+= ' ON ' + condition
+        }
+      }
+    }
+
+    return joins.join(this.separator);
+  }
+
+
+  /**
    * Creates an WHERE SQL statement.
    *
    * @param condition
@@ -316,9 +349,11 @@ class QueryBuilder {
           tables[i] = this.db.quoteTableName(table);
         }
       }
-
     }
-    return tables;
+
+    return typeof tables === 'object'
+        ? Object.values(tables)
+        : tables;
   }
 
   /**
@@ -423,7 +458,7 @@ class QueryBuilder {
             query.getSelectOption(),
         ),
         this.buildFrom(query.getFrom(), params),
-        //buildJoin
+        this.buildJoin(query.getJoin(), params),
         this.buildWhere(query.getWhere(), params),
         this.buildGroupBy(query.getGroupBy()),
         this.buildHaving(query.getHaving(), params),

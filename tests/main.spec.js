@@ -180,6 +180,14 @@ describe('tests connections', function() {
         query.createCommand(db).getRawSql());
   });
 
+  it('test from alias object for Query', function(){
+    let db = DBA.instance(PG);
+    let query = new Query();
+    query.from({u: 'users', p: 'payments'});
+    expectSql('SELECT * ' +
+        'FROM "users" "u", "payments" "p"', query.createCommand(db).getRawSql());
+  });
+
   it('test from for Query', function() {
     let db = DBA.instance(PG);
     let query = new Query();
@@ -192,7 +200,6 @@ describe('tests connections', function() {
     expect(['user as u']).to.deep.equal(query.getFrom());
     expectSql(`SELECT *
                FROM "user" AS "u"`, query.createCommand(db).getRawSql());
-
   });
 
   it('test where for Query', function() {
@@ -533,5 +540,70 @@ describe('tests connections', function() {
         query.createCommand(db).getRawSql(),
     );
   });
+
+  it('test join for Query', function() {
+    let db = DBA.instance(PG);
+    let query = new Query();
+    query.select('*');
+    query.from('users as u');
+    query.join('paymens as p', 'u.id = p.user_id')
+    query.where({status: 1})
+    expectSql(
+        `SELECT * FROM "users" AS "u" JOIN "paymens" AS "p" ON u.id = p.user_id WHERE "status"=1`,
+        query.createCommand(db).getRawSql(),
+    );
+  })
+
+  it('test left join for Query', function() {
+    let db = DBA.instance(PG);
+    let query = new Query();
+    query.select('*');
+    query.from('users as u');
+    query.leftJoin('paymens as p', 'u.id = p.user_id')
+    query.where({status: 1})
+    expectSql(
+        `SELECT * 
+    FROM "users" AS "u" 
+    LEFT JOIN "paymens" AS "p" ON u.id = p.user_id
+    WHERE "status"=1`,
+        query.createCommand(db).getRawSql(),
+    );
+  })
+
+  it('test inner join for Query', function() {
+    let db = DBA.instance(PG);
+    let query = new Query();
+    query.select('*');
+    query.from('users as u');
+    query.innerJoin(
+        'paymens as p',
+        'u.id = p.user_id AND p.status=:status', {
+          ':status': 3,
+        });
+    query.where({status: 1})
+    expectSql(
+        `SELECT * 
+        FROM "users" AS "u" 
+        INNER JOIN "paymens" AS "p" ON u.id = p.user_id AND p.status=3 
+        WHERE "status"=1`,
+        query.createCommand(db).getRawSql(),
+    );
+  })
+
+  it('test right join for Query', function() {
+    let db = DBA.instance(PG);
+    let query = new Query();
+    query.select('*');
+    query.from('users as u');
+    query.rightJoin('paymens as p', 'u.id = p.user_id')
+    query.where({status: 1})
+    expectSql(
+        `SELECT * 
+            FROM "users" AS "u" 
+            RIGHT JOIN "paymens" AS "p" ON u.id = p.user_id
+            WHERE "status"=1`,
+        query.createCommand(db).getRawSql(),
+    );
+  })
 
 });
