@@ -729,7 +729,7 @@ class Query extends Base {
       return condition;
     }
 
-    if (condition[0] === void 0) {
+    if (!condition[0]) {
       for (let key in condition) {
         if (helper.isEmpty(condition[key])) {
           delete condition[key];

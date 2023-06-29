@@ -9,7 +9,7 @@ class HashConditionBuilder extends ExpressionBuilder
 {
   /**
    *
-   * @param {HashCondition} expression
+   * @param {HashCondition|{}} expression
    * @param params
    */
     build(expression, params) {

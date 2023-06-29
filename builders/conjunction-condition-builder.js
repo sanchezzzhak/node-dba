@@ -1,6 +1,7 @@
 const ExpressionBuilder = require("../expression-builder");
 const Expression = require("../expression");
 const helper = require("../helper");
+const HashCondition = require("../conditions/hash-condition");
 
 class ConjunctionConditionBuilder extends ExpressionBuilder
 {
@@ -18,7 +19,10 @@ class ConjunctionConditionBuilder extends ExpressionBuilder
       if (helper.instanceOf(condition, Expression)) {
         condition = this.queryBuilder.buildExpression(condition, params);
       }
-      if (condition !== '') {
+      if (typeof condition === 'object') {
+        condition = this.queryBuilder.buildExpression(new HashCondition(condition), params);
+      }
+      if (condition !== '' && condition !== void 0) {
         result.push(condition);
       }
     })

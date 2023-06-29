@@ -169,7 +169,6 @@ class QueryBuilder {
    * @return {string}
    */
   buildHaving(condition, params) {
-    console.log({condition})
     let having = this.buildCondition(condition, params);
     return (having === '' || having === void 0) ? '' : 'HAVING ' + having;
   }
@@ -179,30 +178,31 @@ class QueryBuilder {
    *
    * @param {array|{}} condition
    * @param {{}} params
-   * @returns {string}
+   * @returns {{}}
    */
   buildCondition(condition, params) {
     if (helper.empty(condition)) {
       return '';
     }
-
-     if (typeof condition === 'object' || Array.isArray(condition)) {
+    if (typeof condition === 'object' || Array.isArray(condition)) {
       condition = this.createConditionFromArray(condition);
       if (helper.instanceOf(condition, Expression)) {
         return this.buildExpression(condition, params);
       }
-     }
+    }
 
     return String(condition);
   }
 
   createConditionFromArray(condition) {
     if (Array.isArray(condition) && helper.isset(condition[0])) {
-      let operator = condition.shift().toUpperCase();
+      let operator = condition[0].toUpperCase();
+      let subCondition = [].concat(condition);
+      subCondition.shift();
       if (helper.isset(this.conditionMap[operator])) {
-        return new this.conditionMap[operator](operator, condition);
+        return new this.conditionMap[operator](operator, subCondition);
       }
-      return new SimpleCondition(operator, condition);
+      return new SimpleCondition(operator, subCondition);
     }
 
     return new HashCondition(condition);

@@ -314,8 +314,9 @@ describe('tests connections', function() {
         'and',
         ['like', 'name', ''],
         ['like', 'title', ''],
-        {'id': 1},
-        ['not', ['like', 'name', '']]]);
+        {id: 1},
+        ['not like', 'title', ''],
+      ]);
 
       expectSql(`SELECT *
                  FROM "user"
