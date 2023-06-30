@@ -54,3 +54,5 @@ class TableSchema extends Base {
 
 
 }
+
+module.exports = TableSchema;

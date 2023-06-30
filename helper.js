@@ -150,6 +150,40 @@ exports.arrayUnique = function (arr1) {
   return arr1.filter((v, i, a) => a.indexOf(v) === i);
 };
 
+
+/**
+ * Compare versions
+ * @param ver1
+ * @param ver2
+ * @returns {number}
+ */
+exports.versionCompare = function(ver1, ver2) {
+  if (ver1 === ver2) {
+    return 0;
+  }
+  let left = ver1.split('.');
+  let right = ver2.split('.');
+  let len = Math.min(left.length, right.length);
+  for (let i = 0; i < len; i++) {
+    if (left[i] === right[i]) {
+      continue;
+    }
+    if (parseInt(left[i]) > parseInt(right[i])) {
+      return 1;
+    }
+    if (parseInt(left[i]) < parseInt(right[i])) {
+      return -1;
+    }
+  }
+  if (left.length > right.length) {
+    return 1;
+  }
+  if (left.length < right.length) {
+    return -1;
+  }
+  return 0;
+}
+
 /***
  *
  * @param {string} str

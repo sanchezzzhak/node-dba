@@ -73,19 +73,23 @@ class Command extends Base {
   }
 
   async queryOne() {
-
+    return await this.#queryInternal('one')
   }
 
   async queryAll() {
-
+    return await this.#queryInternal('all')
   }
 
   async queryColumn() {
-
+    return await this.#queryInternal('column')
   }
 
   async queryScalar() {
+    return await this.#queryInternal('scalar')
+  }
 
+  async #queryInternal(method) {
+    return await this.execute();
   }
 
   /**
