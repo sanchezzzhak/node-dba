@@ -47,11 +47,59 @@ const result = await query.select(['id', 'name'])
 
 
 
-#### Migration usage
-* create migrate `node node_modules/bin/dba migrate/create <db> <name migration>`
-* commit migrate `node node_modules/bin/dba migrate/up <db> <count option>`
-* rollback migrate `node node_modules/bin/dba migrate/down <db> <count option> <db>`
+#### Migration
+Create `bin/dba-migrate.js` file locally and implement the following code.
+```js
+const {DBA, MigrationManager} = require('node-dba');
 
-#### CRUD usage
-* create active record model `node node_modules/bin/dba crud/create-model <db> <table name> <save to path>`
-* create active query `node node_modules/bin/dba crud/create-query <db> <table name> <save to path>`
+DBA.loadConfigsForDir(__dirname + '/config/local/db');
+const migrateManager = new MigrationManager({
+  // the path where to look for migrations
+  migrations: __dirname + '/migrations',
+});
+
+migrateManager.run();
+```
+The following commands will be available to you.
+* create migrate `node bin/dba-migrate create <name migration>`
+* commit migrate `node node bin/dba-migrate up <count option>`
+* rollback migrate `node bin/dba-migrate down <count option>`
+
+Example manual create migrate class
+```js
+const {DBA, Migration} = require('node-dba');
+
+class Migrate_UserTable extends Migration {
+
+  async safeUp(){
+    await this.createTable('table name', {
+        'id' : this.pk(),
+        'email': this.string()
+    });
+    return true;
+  }
+
+  async safeDown(){
+    await this.dropTable('table name');
+    return true;
+  }
+}
+
+module.exports = Migrate_UserTable;
+```
+
+#### CRUD
+Create `bin/dba-crud.js` file locally and implement the following code.
+```js
+const {DBA, CrudManager} = require('node-dba');
+DBA.loadConfigsForDir(__dirname + '/config/local/db');
+const crudManager = new CrudManager({
+  // path where to save new models
+  models: __dirname + '/models',
+});
+
+crudManager.run();
+```
+The following commands will be available to you.
+* create active record model `node bin/dba-crud.js create-model <table name>` 
+* create active query `node bin/dba-crud.js create-query <table name>`

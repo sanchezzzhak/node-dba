@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const Query = require('./query');
+const Migration = require('./migration');
 const Expression = require('./expression');
 
 const SUPPORT_DRIVERS = [
@@ -67,9 +68,11 @@ class DBA {
       configMap[name] = require(dirPath + '/' + fileName);
     }));
   }
-
 }
 
 module.exports = {
-  DBA, Query, Expression
+  DBA,
+  Query,
+  Expression,
+  Migration
 };
