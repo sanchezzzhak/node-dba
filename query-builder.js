@@ -41,6 +41,7 @@ class QueryBuilder {
   separator = ' ';
 
   conditionMap = {};
+  typeMap = {};
   expressionBuilderMap = {};
 
   /**
@@ -134,27 +135,27 @@ class QueryBuilder {
 
     joins = [].concat(joins);
 
-    for(let i=0, l = joins.length; i < l; i++){
+    for (let i = 0, l = joins.length; i < l; i++) {
       let join = joins[i];
       if (!Array.isArray(join)) {
-        throw new Error('join clause must be specified as an array of join type, join table, and optionally join condition.')
+        throw new Error(
+            'join clause must be specified as an array of join type, join table, and optionally join condition.');
       }
       let joinType = join[0];
       let table = join[1];
       let tables = this.quoteTableNames([table], params);
       table = tables[0];
-      joins[i] = joinType + ' ' + table
+      joins[i] = joinType + ' ' + table;
       if (join[2]) {
         let condition = this.buildCondition(join[2], params);
         if (condition !== '') {
-          joins[i]+= ' ON ' + condition
+          joins[i] += ' ON ' + condition;
         }
       }
     }
 
     return joins.join(this.separator);
   }
-
 
   /**
    * Creates an WHERE SQL statement.
@@ -514,7 +515,7 @@ class QueryBuilder {
    * Creates an UPDATE SQL statement.
    *
    * @param {string} table
-   * @param {Object}columns
+   * @param {Object} columns
    * @param {Object|String|array} condition
    * @param {Object} conditionParams
    * @return {string}
@@ -529,6 +530,127 @@ class QueryBuilder {
   }
 
   /**
+   * Creates an INSERT SQL statement.
+   *
+   * @param {string} table - the table that new rows will be inserted into.
+   * @param {{}} columns
+   * @param conditionParams
+   */
+  async insert(table, columns, params) {
+    let {
+      names,
+      placeholders,
+      values,
+    } = await this.#prepareInsertValues(table, columns, params);
+
+    return `INSERT INTO ${this.db.quoteTableName(table)}` +
+        (!helper.empty(names) ? ' (' + names.join(', ') + ')' : '') +
+        (!helper.empty(placeholders) ? ' VALUES (' + placeholders.join(', ') +
+            ')' : values);
+  }
+
+  async batchInsert(table, columns, rows, params) {
+    if (helper.empty(rows)) {
+      return '';
+    }
+  }
+
+  async createTable(table, columns, options = null) {
+    const sets = [];
+    for (let [column, type] of Object.entries(columns)) {
+      if (typeof column === 'string') {
+        sets.push(
+            `\t${this.db.quoteColumnName(column)} ${this.getColumnType(type)}`);
+      }
+    }
+    let sql = `CREATE TABLE ${this.db.quoteTableName(table)} (\n ${sets.join(
+        ',\n')} \n)`;
+    return null === options ? sql : `${sql} ${options}`;
+  }
+
+  async dropTable(table) {
+    return `DROP TABLE ${this.db.quoteTableName(table)}`;
+  }
+
+  getColumnType(type) {
+    let matches;
+    if (helper.isset(this.typeMap[type])) {
+      return this.typeMap[type];
+    }
+    matches = /^(\w+)\((.+?)\)(.*)$/.exec(type);
+    if (matches !== null) {
+      if (helper.isset(this.typeMap[matches[1]])) {
+        return String(this.typeMap[matches[1]]).
+        replace(/\(.+\)/, '(' + matches[2] + ')') + matches[3];
+      }
+      return type;
+    }
+    matches = /^(\w+)\s+/.exec(type);
+    if (matches !== null) {
+      if (helper.isset(this.typeMap[matches[1]])) {
+        return String(type).
+        replace(/^\w+/, this.typeMap[matches[1]]);
+      }
+    }
+
+    return type;
+  }
+
+  /**
+   * Prepares a `VALUES` part for an `INSERT` SQL statement.
+   * @param table
+   * @param columns
+   * @param params
+   * @returns {Promise<{names: [], values: string, placeholders: [], params: *}>}
+   */
+  async #prepareInsertValues(table, columns, params) {
+    let names = [];
+    let placeholders = [];
+    let values = ' DEFAULT VALUES';
+    let tableSchema = await this.db.getTableSchema(table);
+    if (helper.instanceOf(columns, Query)) {
+      let data = this.#prepareInsertSelectSubQuery(columns, params);
+
+    } else {
+      const columnSchemas = tableSchema !== null ? tableSchema.columns : {};
+      for (let [column, value] of Object.entries(columns)) {
+        names.push(this.db.quoteColumnName(column));
+        value = helper.isset(columnSchemas[column])
+            ? columnSchemas[column].dbTypecast(value)
+            : value;
+        if (helper.instanceOf(value, Expression)) {
+          placeholders.push(this.buildExpression(value, params));
+        } else if (helper.instanceOf(value, Query)) {
+          let data = this.build(value, params);
+          placeholders.push(`(${data.sql})`);
+        } else {
+          placeholders.push(this.bindParam(value, params));
+        }
+      }
+    }
+    return {names, values, placeholders, params};
+  }
+
+  async #prepareInsertSelectSubQuery(columns, params) {
+    let data = this.build(columns, params);
+    let names = [];
+    let values = ` ${data.sql}`;
+    for (let [column, value] of Object.entries(columns.getSelect())) {
+      if (typeof column === 'string') {
+        names.push(this.db.quoteColumnName(column));
+        continue;
+      }
+      let matches = /^(.*?)(?:\s+[aA][sS]\s+|\s+)([\w\-_.]+)$/.exec(value);
+      if (matches) {
+        names.push(this.db.quoteColumnName(matches[2]));
+        continue;
+      }
+      names.push(this.db.quoteColumnName(value));
+    }
+    return {names, values, params};
+  }
+
+  /**
    * Prepares a `SET` parts for an `UPDATE` SQL statement.
    *
    * @param {string} table
@@ -536,9 +658,9 @@ class QueryBuilder {
    * @param {Object} params
    * @return {{sets: [], params: *}}
    */
-  #prepareUpdateSets(table, columns, params) {
+  async #prepareUpdateSets(table, columns, params) {
     const sets = [];
-    const tableSchema = this.db.getTableSchema(table);
+    const tableSchema = await this.db.getTableSchema(table);
     const columnSchemas = tableSchema !== null ? tableSchema.columns : {};
 
     for (let [column, value] of Object.entries(columns)) {
