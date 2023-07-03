@@ -534,9 +534,10 @@ class QueryBuilder {
    *
    * @param {string} table - the table that new rows will be inserted into.
    * @param {{}} columns
-   * @param conditionParams
+   * @param {{}} params
    */
-  async insert(table, columns, params) {
+  async insert(table, columns, params= {}) {
+
     let {
       names,
       placeholders,
@@ -610,25 +611,26 @@ class QueryBuilder {
     let tableSchema = await this.db.getTableSchema(table);
     if (helper.instanceOf(columns, Query)) {
       let data = this.#prepareInsertSelectSubQuery(columns, params);
-
     } else {
       const columnSchemas = tableSchema !== null ? tableSchema.columns : {};
       for (let [column, value] of Object.entries(columns)) {
         names.push(this.db.quoteColumnName(column));
-        value = helper.isset(columnSchemas[column])
+        let val = helper.isset(columnSchemas[column])
             ? columnSchemas[column].dbTypecast(value)
             : value;
-        if (helper.instanceOf(value, Expression)) {
-          placeholders.push(this.buildExpression(value, params));
-        } else if (helper.instanceOf(value, Query)) {
-          let data = this.build(value, params);
+        if (helper.instanceOf(val, Expression)) {
+          placeholders.push(this.buildExpression(val, params));
+        } else if (helper.instanceOf(val, Query)) {
+          let data = this.build(val, params);
           placeholders.push(`(${data.sql})`);
         } else {
-          placeholders.push(this.bindParam(value, params));
+          placeholders.push(this.bindParam(val, params));
         }
       }
     }
-    return {names, values, placeholders, params};
+    console.log({names, values, placeholders, params});
+
+    return {names, values, placeholders};
   }
 
   async #prepareInsertSelectSubQuery(columns, params) {

@@ -20,14 +20,76 @@ class Schema extends BaseSchema {
   async loadTableSchema(name) {
     const table = this.createTableSchema();
     this.resolveTableNames(table, name);
-    if (await this.findColumns(table)) {
-      this.findConstraints(table);
+    if (await this.resolveTableColumns(table)) {
+      await this.resolveTableConstraints(table);
       return table;
     }
     return null;
   }
 
-  async findColumns(table) {
+  async resolveTableConstraints(table) {
+    let tableName = this.db.quoteValue(table.name);
+    let tableSchema = this.db.quoteValue(table.schemaName);
+
+    let sql = `select
+    ct.conname as constraint_name,
+    a.attname as column_name,
+    fc.relname as foreign_table_name,
+    fns.nspname as foreign_table_schema,
+    fa.attname as foreign_column_name
+  from (select
+    ct.conname,
+        ct.conrelid,
+        ct.confrelid,
+        ct.conkey,
+        ct.contype,
+        ct.confkey,
+    generate_subscripts(ct.conkey,1) as s
+    from
+    pg_constraint ct
+  ) as ct
+    inner join pg_class c on c.oid = ct.conrelid
+    inner join pg_namespace ns on c.relnamespace = ns.oid
+    inner join pg_attribute a on a.attrelid = ct.conrelid and a.attnum = ct.conkey[ct.s]
+    left join pg_class fc on fc.oid = ct.confrelid
+    left join pg_namespace fns on fc.relnamespace = fns.oid
+    left join pg_attribute fa on fa.attrelid = ct.confrelid and fa.attnum = ct.confkey[ct.s]
+  where
+    ct.contype = 'f'
+    and c.relname=${tableName}
+    and ns.nspname=${tableSchema}
+  order by
+    fns.nspname, fc.relname, a.attnum`;
+
+    let constraints = {};
+    let queryResult = await this.db.createCommand(sql).queryAll();
+    if (helper.empty(queryResult.rows)) {
+      return false;
+    }
+
+    for (let i = 0, l = queryResult.rows.length; i < l; i++) {
+      let constraint = queryResult.rows[i];
+      let foreignTable = constraint['foreign_table_name'];
+      if (constraint['foreign_table_schema'] !== this.defaultSchema) {
+        foreignTable = constraint['foreign_table_schema'] + '.' +
+            constraint['foreign_table_name'];
+      }
+      let name =  constraint['constraint_name'];
+      if (constraints[name] === void 0) {
+        constraints[name] = {'tableName' : foreignTable, 'columns' : {}}
+      }
+      constraints[name]['columns'][constraint['column_name']] = constraint['foreign_column_name'];
+    }
+    // for(let [name, constraint] of Object.entries(constraints)){
+    //   table.foreignKeys[name] = {
+    //     'tableName': constraint.tableName,
+    //     'columns': constraint.columns,
+    //   };
+    // }
+    return true;
+  }
+
+  async resolveTableColumns(table) {
     let tableName = this.db.quoteValue(table.name);
     let schemaName = this.db.quoteValue(table.schemaName);
     let orIdentity = '';
@@ -80,7 +142,7 @@ class Schema extends BaseSchema {
              AS numeric
     ) AS size,
     a.attnum = any (ct.conkey) as is_pkey,
-    COALESCE(NULLIF(a.attndims, 0), NULLIF(t.typndims, 0), (t.typcategory='A')::int) AS dimension
+    COALESCE(NULLIF(a.attndims, 0), NULLIF(t.typndims, 0),(t.typcategory='A')::int) AS dimension
 FROM
     pg_class c
     LEFT JOIN pg_attribute a ON a.attrelid = c.oid
@@ -96,6 +158,7 @@ WHERE
     AND d.nspname = ${schemaName}
 ORDER BY
     a.attnum;`;
+
     let queryResult = await this.db.createCommand(sql).queryAll();
 
     if (helper.empty(queryResult.rows)) {
@@ -113,9 +176,11 @@ ORDER BY
           table.sequenceName = column.sequenceName;
         }
         column.defaultValue = null;
-      } else if (column.defaultValue) {
+        continue;
+      }
+      if (column.defaultValue) {
         if (
-            [this.TYPE_TIME, this.TYPE_DATE, this.TYPE_TIMESTAMP].includes(
+            [Schema.TYPE_TIME, Schema.TYPE_DATE, Schema.TYPE_TIMESTAMP].includes(
                 column.type) &&
             [
               'NOW()',
@@ -123,7 +188,7 @@ ORDER BY
               'CURRENT_DATE',
               'CURRENT_TIME'].includes(column.defaultValue.toUpperCase())
         ) {
-          column.defaultValue = new Expression(column.defaultValue)
+          column.defaultValue = new Expression(column.defaultValue);
           continue;
         }
         if (column.type === 'boolean') {
@@ -140,14 +205,17 @@ ORDER BY
           column.defaultValue = column.jsTypecast(matches[1]);
           continue;
         }
-        //matches = /^(\()?(.*?)(?(1)\))(?:::.+)?$/.exec(column.defaultValue);
-
+        // numeric(5,2) DEFAULT (0)::numeric NOT NULL
+        matches = /^(\w+\([,\d.]+\) DEFAULT \((.*?)\))::.+/i.exec(
+            column.defaultValue);
+        if (matches !== null) {
+          column.defaultValue = column.jsTypecast(matches[2]);
+          continue;
+        }
 
         column.defaultValue = column.jsTypecast(column.defaultValue);
       }
-
     }
-
     return true;
   }
 
@@ -178,7 +246,7 @@ ORDER BY
     if (column.defaultValue !== null &&
         SERIAL_SEQUENCE_REGEX.test(column.defaultValue)) {
       column.sequenceName = String(column.defaultValue).
-      replaceAll(/nextval|::|regclass|'\)|\('/, '');
+      replaceAll(/nextval|:\:|regclass|'\)|\('/, '');
     } else {
       let tableSequence = this.createTableSchema();
       this.resolveTableNames(tableSequence, data['sequence_name']);

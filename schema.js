@@ -19,28 +19,28 @@ class Schema extends Base {
   serverVersion = null;
   typeMap = {};
 
-  TYPE_PK = 'pk';
-  TYPE_UPK = 'upk';
-  TYPE_BIGPK = 'bigpk';
-  TYPE_UBIGPK = 'ubigpk';
-  TYPE_CHAR = 'char';
-  TYPE_STRING = 'string';
-  TYPE_TEXT = 'text';
-  TYPE_TINYINT = 'tinyint';
-  TYPE_SMALLINT = 'smallint';
-  TYPE_INTEGER = 'integer';
-  TYPE_BIGINT = 'bigint';
-  TYPE_FLOAT = 'float';
-  TYPE_DOUBLE = 'double';
-  TYPE_DECIMAL = 'decimal';
-  TYPE_DATETIME = 'datetime';
-  TYPE_TIMESTAMP = 'timestamp';
-  TYPE_TIME = 'time';
-  TYPE_DATE = 'date';
-  TYPE_BINARY = 'binary';
-  TYPE_BOOLEAN = 'boolean';
-  TYPE_MONEY = 'money';
-  TYPE_JSON = 'json';
+  static TYPE_PK = 'pk';
+  static TYPE_UPK = 'upk';
+  static TYPE_BIGPK = 'bigpk';
+  static TYPE_UBIGPK = 'ubigpk';
+  static TYPE_CHAR = 'char';
+  static TYPE_STRING = 'string';
+  static TYPE_TEXT = 'text';
+  static TYPE_TINYINT = 'tinyint';
+  static TYPE_SMALLINT = 'smallint';
+  static TYPE_INTEGER = 'integer';
+  static TYPE_BIGINT = 'bigint';
+  static TYPE_FLOAT = 'float';
+  static TYPE_DOUBLE = 'double';
+  static TYPE_DECIMAL = 'decimal';
+  static TYPE_DATETIME = 'datetime';
+  static TYPE_TIMESTAMP = 'timestamp';
+  static TYPE_TIME = 'time';
+  static TYPE_DATE = 'date';
+  static TYPE_BINARY = 'binary';
+  static TYPE_BOOLEAN = 'boolean';
+  static TYPE_MONEY = 'money';
+  static TYPE_JSON = 'json';
 
 
   /***
@@ -161,8 +161,8 @@ class Schema extends Base {
     return name.split('.');
   }
 
-  getTableSchema(name, refresh) {
-    return this.getTableMetadata(name, TYPE_SCHEMA, refresh);
+  async getTableSchema(name, refresh) {
+    return await this.getTableMetadata(name, TYPE_SCHEMA, refresh);
   }
 
   async getTableMetadata(name, type, refresh) {
@@ -244,16 +244,16 @@ class Schema extends Base {
    */
   getColumnJsType(column) {
     switch (column.type) {
-      case this.TYPE_BIGINT:
+      case Schema.TYPE_BIGINT:
         return 'bigint';
-      case this.TYPE_TINYINT:
-      case this.TYPE_SMALLINT:
-      case this.TYPE_INTEGER:
+      case Schema.TYPE_TINYINT:
+      case Schema.TYPE_SMALLINT:
+      case Schema.TYPE_INTEGER:
         return column.unsigned ? 'string' : 'number';
-      case this.TYPE_BOOLEAN:
+      case Schema.TYPE_BOOLEAN:
         return 'boolean';
-      case this.TYPE_FLOAT:
-      case this.TYPE_DECIMAL:
+      case Schema.TYPE_FLOAT:
+      case Schema.TYPE_DECIMAL:
         return 'number';
     }
 

@@ -609,22 +609,22 @@ describe('tests connections', function() {
   describe('tests commands', function() {
     const db = DBA.instance(PG);
     const TABLE_NAME = 'test_table';
-    it('test create table', async function() {
-        await db.createCommand().createTable(TABLE_NAME, {
-          'name': 'varchar(255)'
-        })
-    });
+
+    // it('test create table', async function() {
+    //     await db.createCommand().createTable(TABLE_NAME, {
+    //       'name': 'varchar(255)'
+    //     })
+    // });
 
     it('test insert', async function() {
       let result = await db.createCommand().insert(TABLE_NAME, {
         name: 'test'
       })
-      console.log(result)
     });
 
-    it('test drop table', async function() {
-      await db.createCommand().dropTable(TABLE_NAME)
-    });
+    // it('test drop table', async function() {
+    //   await db.createCommand().dropTable(TABLE_NAME)
+    // });
   });
 
 

@@ -1,4 +1,8 @@
 const Base = require('./base');
+const Schema = require('./schema');
+const Query = require('./query');
+const helper = require('./helper');
+const Expression = require('./expression');
 
 class ColumnSchema extends Base {
 
@@ -72,8 +76,25 @@ class ColumnSchema extends Base {
   }
 
   typecast(value) {
-    return void 0;
+
+    if (value === '' && [
+      Schema.TYPE_TEXT,
+      Schema.TYPE_STRING,
+      Schema.TYPE_BINARY,
+      Schema.TYPE_CHAR,
+    ].includes(this.type)) {
+      return null;
+    }
+
+    if( value === null
+      || helper.instanceOf(value, Query)
+      || helper.instanceOf(value, Expression)
+    ) {
+      return value
+    }
+
+    return value;
   }
 }
 
-module.exports =ColumnSchema;
+module.exports = ColumnSchema;
