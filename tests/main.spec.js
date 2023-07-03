@@ -619,7 +619,7 @@ describe('tests connections', function() {
       let result = await db.createCommand().insert(TABLE_NAME, {
         name: 'test'
       })
-      console.log({result})
+      console.log(result)
     });
 
     it('test drop table', async function() {

@@ -2,11 +2,15 @@ const BaseSchema = require('../schema');
 const ColumnSchema = require('./column-schema');
 const helper = require('./../helper');
 const TableSchema = require('./../table-schema');
+const Expression = require('./../expression');
+
+const SERIAL_SEQUENCE_REGEX = /nextval\('"?\w+"?\.?"?\w+"?'(::regclass)?\)/;
 
 class Schema extends BaseSchema {
   tableQuoteCharacter = '"';
   defaultSchema = 'public';
-  columnSchema = ColumnSchema;
+
+  TYPE_JSONB = 'jsonb';
 
   constructor(config) {
     super(config);
@@ -14,7 +18,7 @@ class Schema extends BaseSchema {
   }
 
   async loadTableSchema(name) {
-    const table = new TableSchema();
+    const table = this.createTableSchema();
     this.resolveTableNames(table, name);
     if (await this.findColumns(table)) {
       this.findConstraints(table);
@@ -24,10 +28,11 @@ class Schema extends BaseSchema {
   }
 
   async findColumns(table) {
-    let tableName = this.db.quoteValue(table.name)
-    let schemaName = this.db.quoteValue(table.schemaName)
-    let orIdentity = ''
-    if (this.db.serverVersion && helper.versionCompare(this.db.serverVersion, '12.0') >= 0) {
+    let tableName = this.db.quoteValue(table.name);
+    let schemaName = this.db.quoteValue(table.schemaName);
+    let orIdentity = '';
+    if (this.db.serverVersion &&
+        helper.versionCompare(this.db.serverVersion, '12.0') >= 0) {
       orIdentity = `OR attidentity != ''`;
     }
     let sql = `SELECT
@@ -91,11 +96,102 @@ WHERE
     AND d.nspname = ${schemaName}
 ORDER BY
     a.attnum;`;
-    let columns = await this.db.createCommand(sql).queryAll();
-    if (helper.empty(columns)) {
+    let queryResult = await this.db.createCommand(sql).queryAll();
+
+    if (helper.empty(queryResult.rows)) {
       return false;
     }
-    console.log({columns})
+
+    for (let i = 0, l = queryResult.rows.length; i < l; i++) {
+      let column = queryResult.rows[i];
+      column = this.loadColumnSchema(column);
+      table.columns[column.name] = column;
+
+      if (column.isPrimaryKey) {
+        table.primaryKey.push(column.name);
+        if (table.sequenceName === null) {
+          table.sequenceName = column.sequenceName;
+        }
+        column.defaultValue = null;
+      } else if (column.defaultValue) {
+        if (
+            [this.TYPE_TIME, this.TYPE_DATE, this.TYPE_TIMESTAMP].includes(
+                column.type) &&
+            [
+              'NOW()',
+              'CURRENT_TIMESTAMP',
+              'CURRENT_DATE',
+              'CURRENT_TIME'].includes(column.defaultValue.toUpperCase())
+        ) {
+          column.defaultValue = new Expression(column.defaultValue)
+          continue;
+        }
+        if (column.type === 'boolean') {
+          column.defaultValue = column.defaultValue === 'true';
+          continue;
+        }
+        let matches = /^B'(.*?)'::|^'(\d+)'::"bit"$/.exec(column.defaultValue);
+        if (matches !== null) {
+          column.defaultValue = helper.bindec(matches[1]);
+          continue;
+        }
+        matches = /^'(.*?)'::/.exec(column.defaultValue);
+        if (matches !== null) {
+          column.defaultValue = column.jsTypecast(matches[1]);
+          continue;
+        }
+        //matches = /^(\()?(.*?)(?(1)\))(?:::.+)?$/.exec(column.defaultValue);
+
+
+        column.defaultValue = column.jsTypecast(column.defaultValue);
+      }
+
+    }
+
+    return true;
+  }
+
+  loadColumnSchema(data) {
+    let column = new ColumnSchema();
+    column.allowNull = data['is_nullable'];
+    column.autoIncrement = data['is_autoinc'];
+    column.comment = data['column_comment'];
+    column.unsigned = false;
+    column.isPrimaryKey = data['is_pkey'];
+    column.name = data['column_name'];
+    column.precision = data['numeric_precision'];
+    column.scale = data['numeric_scale'];
+    column.size = data['size'] !== null ? Number(data['size']) : null;
+    column.dimension = Number(data['dimension']);
+    column.defaultValue = data['column_default'];
+    column.dbType = data['data_type'];
+
+    if (data['type_scheme'] !== null &&
+        [this.defaultSchema, 'pg_catalog'].includes(data['type_scheme'])) {
+      column.dbType = data['type_scheme'] + '.' + data['data_type'];
+    }
+
+    column.enumValues = data['enum_values'] !== null
+        ? String(data['enum_values']).replace('\'\'', '\'').split(',')
+        : null;
+
+    if (column.defaultValue !== null &&
+        SERIAL_SEQUENCE_REGEX.test(column.defaultValue)) {
+      column.sequenceName = String(column.defaultValue).
+      replaceAll(/nextval|::|regclass|'\)|\('/, '');
+    } else {
+      let tableSequence = this.createTableSchema();
+      this.resolveTableNames(tableSequence, data['sequence_name']);
+      column.sequenceName = tableSequence.fullName;
+    }
+    column.type = this.typeMap[column.dbType] ?? 'string';
+    column.jsType = this.getColumnJsType(column.dbType);
+
+    return column;
+  }
+
+  createTableSchema() {
+    return new TableSchema();
   }
 
   /**
@@ -104,7 +200,7 @@ ORDER BY
    * @param name
    */
   resolveTableNames(table, name) {
-    const parts = name.replace('"', '').split('.');
+    const parts = String(name).replaceAll('"', '').split('.');
     if (helper.isset(parts[1])) {
       table.schemaName = parts[0];
       table.name = parts[1];
@@ -116,6 +212,8 @@ ORDER BY
     table.fullName = table.schemaName !== this.defaultSchema
         ? `${table.schemaName}.${table.name}`
         : table.name;
+
+    return table;
   }
 
   /**

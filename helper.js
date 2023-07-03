@@ -359,6 +359,11 @@ exports.addcslashes = function (str, charlist) {
   return target
 }
 
+exports.bindec = function(binaryString) {
+  binaryString = (binaryString + '').replace(/[^01]/gi, '')
+  return parseInt(binaryString, 2)
+}
+
 exports.splitCommaString = function (value) {
   return value.trim().split(/\s*,\s*/).filter(val => val !== '')
 }

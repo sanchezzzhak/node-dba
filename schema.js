@@ -17,7 +17,32 @@ class Schema extends Base {
   tableNames = {};
   tableMeteData = {};
   serverVersion = null;
-  
+  typeMap = {};
+
+  TYPE_PK = 'pk';
+  TYPE_UPK = 'upk';
+  TYPE_BIGPK = 'bigpk';
+  TYPE_UBIGPK = 'ubigpk';
+  TYPE_CHAR = 'char';
+  TYPE_STRING = 'string';
+  TYPE_TEXT = 'text';
+  TYPE_TINYINT = 'tinyint';
+  TYPE_SMALLINT = 'smallint';
+  TYPE_INTEGER = 'integer';
+  TYPE_BIGINT = 'bigint';
+  TYPE_FLOAT = 'float';
+  TYPE_DOUBLE = 'double';
+  TYPE_DECIMAL = 'decimal';
+  TYPE_DATETIME = 'datetime';
+  TYPE_TIMESTAMP = 'timestamp';
+  TYPE_TIME = 'time';
+  TYPE_DATE = 'date';
+  TYPE_BINARY = 'binary';
+  TYPE_BOOLEAN = 'boolean';
+  TYPE_MONEY = 'money';
+  TYPE_JSON = 'json';
+
+
   /***
    * @property {QueryBuilder}
    */
@@ -211,6 +236,28 @@ class Schema extends Base {
     const metadata = [];
 
     return metadata;
+  }
+
+  /**
+   *
+   * @param {ColumnSchema} } column
+   */
+  getColumnJsType(column) {
+    switch (column.type) {
+      case this.TYPE_BIGINT:
+        return 'bigint';
+      case this.TYPE_TINYINT:
+      case this.TYPE_SMALLINT:
+      case this.TYPE_INTEGER:
+        return column.unsigned ? 'string' : 'number';
+      case this.TYPE_BOOLEAN:
+        return 'boolean';
+      case this.TYPE_FLOAT:
+      case this.TYPE_DECIMAL:
+        return 'number';
+    }
+
+    return 'string';
   }
 
 }
