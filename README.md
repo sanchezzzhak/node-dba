@@ -56,6 +56,7 @@ DBA.loadConfigsForDir(__dirname + '/config/local/db');
 const migrateManager = new MigrationManager({
   // the path where to look for migrations
   migrations: __dirname + '/migrations',
+  migrationsTableName: 'migration'
 });
 
 migrateManager.run();
