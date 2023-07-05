@@ -9,6 +9,10 @@ const {argv} = require('node:process');
 const prompts = require('prompts');
 const {SingleBar} = require('cli-progress');
 
+const  CONFIRM_ENUMS = ['y', 'yes', 'n', 'no'];
+const  CONFIRM_ENUM_YES = ['y', 'yes'];
+const  CONFIRM_ENUM_NO = ['n', 'no'];
+
 class MigrationManager extends Base {
 
   /*** @type {PgConnection|ClickHouseConnection} db */
@@ -214,29 +218,77 @@ class MigrationManager extends Base {
       console.log(color.yellow(`  ${migration}`));
     }));
 
-    let answersSelect = ['y', 'yes', 'n', 'no'];
     let answer = await prompts([
       {
         type: 'text',
         name: 'value',
-        message: `Apply the above migrations (${answersSelect.join(',')})?`,
-        validate: value => answersSelect.includes(value.toLowerCase()),
+        message: `Apply the above migrations (${CONFIRM_ENUMS.join(',')})?`,
+        validate: value => CONFIRM_ENUMS.includes(value.toLowerCase()),
       },
     ]);
-    if (['y', 'yes'].includes(answer.value)) {
+    if (CONFIRM_ENUM_YES.includes(answer.value)) {
       return await this.processMigration(migrations,
           MigrationManager.COMMAND_UP);
     }
-
-    if (['n', 'no'].includes(answer.value)) {
+    if (CONFIRM_ENUM_NO.includes(answer.value)) {
       console.log(color.red('Operations are canceled.'));
       return true;
     }
   }
 
-  async runCommandCreate(version) {
+  generateNameForVersion(version) {
+      let date = new Date();
+      let prefix = date.getFullYear().toString(10).substring(2)
+          + (date.getMonth()+1).toString(10).padStart(2,'0')
+          + date.getDate().toString(10).padStart(2,'0')
+          + '_'
+          + date.getHours().toString(10).padStart(2,'0')
+          + date.getMinutes().toString(10).padStart(2,'0')
+          + date.getSeconds().toString(10).padStart(2,'0')
 
+      return `${prefix}_${version}`;
   }
+
+  async runCommandCreate(version) {
+    let regex = /^[\w_]{1,220}$/;
+    if (version && !regex.test(version) || version && version.length > 220) {
+      console.log(color.red('The migration name should contain letters, digits, underscore characters only. ([\\w_ ]{1,220})'))
+      return false;
+    }
+    if (!version) {
+      let answer = await prompts([
+        {
+          type: 'text',
+          name: 'value',
+          message: `Set migration name([\\w_]{1,220})?`,
+          validate: value => regex.test(value),
+        },
+      ]);
+      version = answer.value;
+    }
+
+    const prefixVersion = this.generateNameForVersion(version);
+    const file = `${this.migrations}/${prefixVersion}.js`;
+
+    let answer = await prompts([
+      {
+        type: 'text',
+        name: 'value',
+        message: `Create new migration "${file}" (${CONFIRM_ENUMS.join(',')})?`,
+        validate: value => CONFIRM_ENUMS.includes(value.toLowerCase()),
+      },
+    ]);
+    if (CONFIRM_ENUM_YES.includes(answer.value)) {
+
+
+      return true;
+    }
+    if (CONFIRM_ENUM_NO.includes(answer.value)) {
+      console.log(color.red('Operations are canceled.'));
+      return true;
+    }
+  }
+
 
   /**
    * Down migrations command
@@ -270,21 +322,19 @@ class MigrationManager extends Base {
       console.log(color.yellow(`  ${migration}`));
     }));
 
-    let answersSelect = ['y', 'yes', 'n', 'no'];
     let answer = await prompts([
       {
         type: 'text',
         name: 'value',
-        message: `Revert the above migrations (${answersSelect.join(',')})?`,
-        validate: value => answersSelect.includes(value.toLowerCase()),
+        message: `Revert the above migrations (${CONFIRM_ENUMS.join(',')})?`,
+        validate: value => CONFIRM_ENUMS.includes(value.toLowerCase()),
       },
     ]);
-    if (['y', 'yes'].includes(answer.value)) {
+    if (CONFIRM_ENUM_YES.includes(answer.value)) {
       return await this.processMigration(migrations,
           MigrationManager.COMMAND_DOWN);
     }
-
-    if (['n', 'no'].includes(answer.value)) {
+    if (CONFIRM_ENUM_NO.includes(answer.value)) {
       console.log(color.red('Operations are canceled.'));
       return true;
     }
