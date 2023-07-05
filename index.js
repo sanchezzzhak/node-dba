@@ -1,7 +1,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const Query = require('./query');
+const OrderSort = require('./order-sort');
 const Migration = require('./migration');
+const MigrationManager = require('./migration-manager');
 const Expression = require('./expression');
 
 const SUPPORT_DRIVERS = [
@@ -73,6 +75,8 @@ class DBA {
 module.exports = {
   DBA,
   Query,
+  OrderSort,
   Expression,
-  Migration
+  Migration,
+  MigrationManager,
 };

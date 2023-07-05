@@ -364,6 +364,14 @@ exports.bindec = function(binaryString) {
   return parseInt(binaryString, 2)
 }
 
+exports.ksort = function(objects) {
+  return Object.keys(objects).sort().reduce(function (result, key) {
+    result[key] = objects[key];
+    return result;
+  }, {});
+}
+
+
 exports.splitCommaString = function (value) {
   return value.trim().split(/\s*,\s*/).filter(val => val !== '')
 }

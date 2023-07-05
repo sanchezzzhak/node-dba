@@ -581,8 +581,25 @@ class Query extends Base {
    * @param db
    * @returns {*}
    */
-  all(db = null) {
+  async all(db = null) {
     return this.createCommand(db).queryAll();
+  }
+
+  /**
+   * Executes the query and returns map object { from: to}
+   *
+   * @param db - db connection
+   * @param from - for key
+   * @param to - for value
+   * @returns {Promise<{}>}
+   */
+  async map(db, from, to) {
+    const result = await this.all(db);
+    const map = {};
+    for(let i=0, l = result.rows.length; i <l; i++){
+      map[result.rows[i][from]] = result.rows[i][to];
+    }
+    return map;
   }
 
   each(batchSize = 100) {

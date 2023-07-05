@@ -89,11 +89,11 @@ class BaseConnection extends Base {
   /**
    * Creates a command for execution.
    *
-   * @param {string} sql - the SQL statement to be executed
+   * @param {string"null} sql - the SQL statement to be executed
    * @param {{}} params - the parameters to be bound to the SQL statement
    * @return {Command}
    */
-  createCommand(sql, params = {}) {
+  createCommand(sql = null, params = {}) {
     return new Command({
       db: this,
       sql,
@@ -101,8 +101,8 @@ class BaseConnection extends Base {
     });
   }
 
-  getTableSchema(name, refresh = false) {
-    return this.getSchema().getTableSchema(name, refresh);
+  async getTableSchema(name, refresh = false) {
+    return await this.getSchema().getTableSchema(name, refresh);
   }
 
   getLastInsertID(sequenceName = '') {

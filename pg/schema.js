@@ -171,7 +171,7 @@ ORDER BY
       table.columns[column.name] = column;
 
       if (column.isPrimaryKey) {
-        table.primaryKey.push(column.name);
+        table.primaryKey[i] = column.name;
         if (table.sequenceName === null) {
           table.sequenceName = column.sequenceName;
         }

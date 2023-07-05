@@ -53,13 +53,13 @@ Create `bin/dba-migrate.js` file locally and implement the following code.
 const {DBA, MigrationManager} = require('node-dba');
 
 DBA.loadConfigsForDir(__dirname + '/config/local/db');
-const migrateManager = new MigrationManager({
+const migrationManager = new MigrationManager({
   // the path where to look for migrations
   migrations: __dirname + '/migrations',
   migrationsTableName: 'migration'
 });
 
-migrateManager.run();
+migrationManager.run();
 ```
 The following commands will be available to you.
 * create migrate `node bin/dba-migrate create <name migration>`

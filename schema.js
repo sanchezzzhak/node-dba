@@ -184,6 +184,7 @@ class Schema extends Base {
       }
       this.tableMeteData[rawName][type] = await this[`loadTable${helper.ucfirst(
           type)}`](rawName);
+
       await this.saveTableMetadataToCache(rawName);
     }
 
