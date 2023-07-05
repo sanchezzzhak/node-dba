@@ -530,6 +530,20 @@ class QueryBuilder {
   }
 
   /**
+   * Creates an DELETE SQL statement.
+   *
+   * @param {string} table - the table where the data will be deleted from.
+   * @param {{}} columns
+   * @param {{}} params
+   * @returns {Promise<string>}
+   */
+  async delete(table, columns, params= {}) {
+    let sql = `DELETE FROM ${this.db.quoteTableName(table)}`;
+    let where = this.buildWhere(columns, params);
+    return where === '' ? sql : sql + ' ' + where;
+  }
+
+  /**
    * Creates an INSERT SQL statement.
    *
    * @param {string} table - the table that new rows will be inserted into.
@@ -537,7 +551,6 @@ class QueryBuilder {
    * @param {{}} params
    */
   async insert(table, columns, params= {}) {
-
     let {
       names,
       placeholders,
@@ -628,8 +641,6 @@ class QueryBuilder {
         }
       }
     }
-    console.log({names, values, placeholders, params});
-
     return {names, values, placeholders};
   }
 

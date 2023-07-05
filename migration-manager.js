@@ -1,11 +1,13 @@
 const Base = require('./base');
 const fs = require('node:fs');
+const path = require('node:path');
 const Query = require('./query');
 const OrderSort = require('./order-sort');
 const helper = require('./helper');
 const color = require('ansi-colors');
 const {argv} = require('node:process');
 const prompts = require('prompts');
+const {SingleBar} = require('cli-progress');
 
 class MigrationManager extends Base {
 
@@ -61,7 +63,7 @@ class MigrationManager extends Base {
   async createMigrationHistory(version) {
     return await this.db.createCommand().insert(this.migrationsTableName, {
       version: version,
-      apply_time: (new Date()).getTime(),
+      apply_time: ((1 * new Date()) / 1000).toFixed(0),
     });
   }
 
@@ -75,6 +77,11 @@ class MigrationManager extends Base {
   static COMMAND_DOWN = 'down';
   static COMMAND_CREATE = 'create';
 
+  /**
+   * main method
+   *
+   * @returns {Promise<boolean>}
+   */
   async run() {
     const isInit = await this.initMigrationHistory();
     if (!isInit) {
@@ -85,17 +92,103 @@ class MigrationManager extends Base {
         await this.runCommandUp(parseInt(argv[3] ?? 0));
         break;
       case MigrationManager.COMMAND_DOWN:
-        await this.runCommandDown(parseInt(argv[3] ?? 0));
+        await this.runCommandDown(argv[3] ?? 1);
         break;
       case MigrationManager.COMMAND_CREATE:
+        await this.runCommandCreate(argv[3] ?? null);
         break;
     }
   }
 
+  /**
+   * Apply up migrations for array
+   *
+   * @param migrations
+   * @returns {Promise<boolean>}
+   */
+  async processMigration(migrations, command) {
+    const progress = new SingleBar({
+      format: 'progress |' + color.cyan('{bar}') +
+          '| {percentage}% || {value}/{total} Chunks',
+      barCompleteChar: '\u2588',
+      barIncompleteChar: '\u2591',
+      hideCursor: true,
+    });
+    let start = (new Date()).getTime();
+    let time;
+    let logs = [];
+    progress.start(migrations.length, 0);
+    for (let i = 0, l = migrations.length; i < l; i++) {
+      let result = await (async () => {
+        const name = migrations[i];
+        const file = `${this.migrations}/${name}.js`;
+        const migrate = new (require(file))({
+          db: this.db,
+        });
+
+        if (command === MigrationManager.COMMAND_UP) {
+          logs.push(color.yellow('*** applying ' + name));
+        } else {
+          logs.push(color.yellow('*** reverting ' + name));
+        }
+        let isSuccess = command === MigrationManager.COMMAND_UP
+            ? await migrate.up()
+            : await migrate.down();
+
+        time = new Date().getTime() - start;
+
+        if (isSuccess) {
+          if (command === MigrationManager.COMMAND_UP) {
+            await this.createMigrationHistory(name);
+            logs.push(
+                color.green(
+                    `*** applied ${name} (time: ${(time / 1000)}s)\n`));
+          } else {
+            await this.deleteMigrationHistory(name);
+            logs.push(
+                color.green(
+                    `*** reverted ${name} (time: ${(time / 1000)}s)\n`));
+          }
+          return true;
+        }
+
+        logs.push(command === MigrationManager.COMMAND_UP
+            ? color.red(
+                `*** failed to apply ${name} (time: ${(time / 1000)}s)\n`)
+            : color.red(
+                `*** failed to revert ${name} (time: ${(time / 1000)}s)\n`)
+        );
+
+        return false;
+      })();
+      // print logs and stop progress bar
+      if (!result) {
+        progress.stop();
+        console.log(logs.join('\n'));
+        return false;
+      }
+      progress.increment();
+    }
+    progress.stop();
+
+    console.log(logs.join('\n'));
+    if (command === MigrationManager.COMMAND_UP) {
+      console.log(color.green('Migrated up successfully'));
+    } else {
+      console.log(color.green('Migrated down successfully'));
+    }
+    return true;
+  }
+
+  /**
+   * Up migrations command
+   *
+   * @param limit
+   * @returns {Promise<boolean>}
+   */
   async runCommandUp(limit) {
     let history = await this.getMigrationHistory(null);
-    let migrations = {};
-    let newMigrations = [];
+    let migrations = [];
     fs.readdirSync(this.migrations, {
       withFileTypes: true,
     }).filter((file => /\.(js)$/.test(file.name))).forEach((file => {
@@ -103,21 +196,21 @@ class MigrationManager extends Base {
       let name = path.parse(fileName).name;
 
       if (!history[name]) {
-        newMigrations.push(name);
+        migrations.push(name);
       }
     }));
 
-    if (newMigrations.length === 0) {
+    if (migrations.length === 0) {
       console.log(
           color.green(`No new migration found. Your system is up-to-date`));
       return true;
     }
-    newMigrations.sort();
+    migrations.sort();
     if (limit > 0) {
-      newMigrations = newMigrations.splice(0, limit);
+      migrations = migrations.splice(0, limit);
     }
     console.log(color.yellow(`Total migrations to be applied:`));
-    newMigrations.forEach((migration => {
+    migrations.forEach((migration => {
       console.log(color.yellow(`  ${migration}`));
     }));
 
@@ -127,21 +220,74 @@ class MigrationManager extends Base {
         type: 'text',
         name: 'value',
         message: `Apply the above migrations (${answersSelect.join(',')})?`,
-        validate: value => answersSelect.includes(value.toLowerCase())
+        validate: value => answersSelect.includes(value.toLowerCase()),
       },
     ]);
     if (['y', 'yes'].includes(answer.value)) {
-      return true;
+      return await this.processMigration(migrations,
+          MigrationManager.COMMAND_UP);
     }
+
     if (['n', 'no'].includes(answer.value)) {
-      console.log(color.red('Operations are canceled.'))
+      console.log(color.red('Operations are canceled.'));
       return true;
     }
-    console.log({migrations, history, answer});
   }
 
-  async runCommandDown(limit) {
+  async runCommandCreate(version) {
+
+  }
+
+  /**
+   * Down migrations command
+   *
+   * @param limit
+   * @returns {Promise<boolean>}
+   */
+  async runCommandDown(limit = 1) {
+    if (limit === 'all') {
+      limit = null;
+    } else {
+      limit = parseInt(limit);
+      if (limit < 1) {
+        console.log(color.red('The limit must be greater than 0.'))
+        return false;
+      }
+    }
+
     const history = await this.getMigrationHistory(limit);
+    if (helper.empty(history)) {
+      console.log(color.yellow('No migration has been done before.'))
+      return false;
+    }
+    let migrations = Object.keys(history);
+    if (limit > 0) {
+      migrations = migrations.splice(0, limit);
+    }
+
+    console.log(color.yellow(`Total migrations to be revered:`));
+    migrations.forEach((migration => {
+      console.log(color.yellow(`  ${migration}`));
+    }));
+
+    let answersSelect = ['y', 'yes', 'n', 'no'];
+    let answer = await prompts([
+      {
+        type: 'text',
+        name: 'value',
+        message: `Revert the above migrations (${answersSelect.join(',')})?`,
+        validate: value => answersSelect.includes(value.toLowerCase()),
+      },
+    ]);
+    if (['y', 'yes'].includes(answer.value)) {
+      return await this.processMigration(migrations,
+          MigrationManager.COMMAND_DOWN);
+    }
+
+    if (['n', 'no'].includes(answer.value)) {
+      console.log(color.red('Operations are canceled.'));
+      return true;
+    }
   }
 
 }

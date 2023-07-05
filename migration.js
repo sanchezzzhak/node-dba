@@ -8,31 +8,21 @@ class Migration {
    * be enclosed within a DB transaction.
    * Child classes may implement this method instead of [[up()]] if the DB logic
    * needs to be within a transaction.
-   * @returns {Promise<void>}
+   * @returns {Promise<boolean>}
    */
-  async safeUp() {
-
+  async up() {
+    return true;
   }
-
   /**
    * This method contains the logic to be executed when removing this migration.
    * This method differs from [[down()]] in that the DB logic implemented here will
    * be enclosed within a DB transaction.
    * Child classes may implement this method instead of [[down()]] if the DB logic
    * needs to be within a transaction.
-   * @returns {Promise<void>}
+   * @returns {Promise<boolean>}
    */
-  async safeDown() {
-
-  }
-
-  async up() {
-
-
-  }
-
   async down() {
-
+    return true;
   }
 
 
