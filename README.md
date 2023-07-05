@@ -62,17 +62,17 @@ const migrationManager = new MigrationManager({
 migrationManager.run();
 ```
 The following commands will be available to you.
-* create migrate `node bin/dba-migrate create <name migration>`
-* commit migrate `node node bin/dba-migrate up <count option>`
-* rollback migrate `node bin/dba-migrate down <count option>`
+* create blank migrate `node bin/dba-migrate create <name migration>` 
+* apply migrate `node node bin/dba-migrate up <count option>`
+* revert migrate `node bin/dba-migrate down <count option>`
 
 Example manual create migrate class
 ```js
-const {DBA, Migration} = require('node-dba');
+const {Migration} = require('node-dba');
 
-class Migrate_UserTable extends Migration {
+class UserTable extends Migration {
 
-  async safeUp(){
+  async up(){
     await this.createTable('table name', {
         'id' : this.pk(),
         'email': this.string()
@@ -80,13 +80,13 @@ class Migrate_UserTable extends Migration {
     return true;
   }
 
-  async safeDown(){
+  async down(){
     await this.dropTable('table name');
     return true;
   }
 }
 
-module.exports = Migrate_UserTable;
+module.exports = UserTable;
 ```
 
 #### CRUD
