@@ -63,6 +63,16 @@ class Migration {
     await this.db.createCommand().renameTable(fromTable, toTable);
   }
 
+  /**
+   * Builds and executes a SQL statement for truncating a DB table.
+   *
+   * @param {string} table
+   * @returns {Promise<void>}
+   */
+  async truncateTable(table) {
+    await this.db.createCommand().truncateTable(table);
+  }
+
 }
 
 module.exports = Migration;

@@ -233,8 +233,8 @@ class Command extends Base {
   /**
    * Creates a SQL command for renaming a DB table.
    *
-   * @param fromTable
-   * @param toTable
+   * @param {string} fromTable
+   * @param {string} toTable
    * @returns {Promise<*>}
    */
   async renameTable(fromTable, toTable) {
@@ -244,9 +244,21 @@ class Command extends Base {
   }
 
   /**
+   * Creates a SQL command for renaming a DB table.
+   *
+   * @param {string} table
+   * @returns {Promise<*>}
+   */
+  async truncateTable(table) {
+    let sql = await this.db.getQueryBuilder().truncateTable(table);
+    this.setSql(sql);
+    return await this.execute();
+  }
+
+  /**
    * Creates a SQL command for dropping a DB table.
    *
-   * @param table
+   * @param {string} table
    * @returns {Promise<*>}
    */
   async dropTable(table) {

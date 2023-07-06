@@ -593,7 +593,7 @@ class QueryBuilder {
   /**
    * Builds a SQL statement for dropping a DB table.
    *
-   * @param table
+   * @param {string} table
    * @returns {Promise<string>}
    */
   async dropTable(table) {
@@ -603,12 +603,22 @@ class QueryBuilder {
   /**
    * Builds a SQL statement for renaming a DB table.
    *
-   * @param fromTable
-   * @param toTable
+   * @param {string}  fromTable
+   * @param {string}  toTable
    * @returns {Promise<string>}
    */
   async renameTable(fromTable, toTable) {
     return `RENAME TABLE ${this.db.quoteTableName(fromTable)} TO ${this.db.quoteTableName(toTable)}`;
+  }
+
+  /**
+   * Builds a SQL statement for truncating a DB table.
+   *
+   * @param {string} table
+   * @returns {Promise<string>}
+   */
+  async truncateTable(table) {
+    return `TRUNCATE TABLE ${this.db.quoteTableName(table)}`;
   }
 
   getColumnType(type) {
