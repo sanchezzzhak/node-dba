@@ -569,6 +569,14 @@ class QueryBuilder {
     }
   }
 
+  /**
+   * Builds a SQL statement for creating a new DB table.
+   *
+   * @param table
+   * @param columns
+   * @param options
+   * @returns {Promise<string>}
+   */
   async createTable(table, columns, options = null) {
     const sets = [];
     for (let [column, type] of Object.entries(columns)) {
@@ -582,8 +590,25 @@ class QueryBuilder {
     return null === options ? sql : `${sql} ${options}`;
   }
 
+  /**
+   * Builds a SQL statement for dropping a DB table.
+   *
+   * @param table
+   * @returns {Promise<string>}
+   */
   async dropTable(table) {
     return `DROP TABLE ${this.db.quoteTableName(table)}`;
+  }
+
+  /**
+   * Builds a SQL statement for renaming a DB table.
+   *
+   * @param fromTable
+   * @param toTable
+   * @returns {Promise<string>}
+   */
+  async renameTable(fromTable, toTable) {
+    return `RENAME TABLE ${this.db.quoteTableName(fromTable)} TO ${this.db.quoteTableName(toTable)}`;
   }
 
   getColumnType(type) {
@@ -612,6 +637,7 @@ class QueryBuilder {
 
   /**
    * Prepares a `VALUES` part for an `INSERT` SQL statement.
+   *
    * @param table
    * @param columns
    * @param params

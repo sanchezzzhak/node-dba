@@ -230,6 +230,25 @@ class Command extends Base {
     return await this.execute();
   }
 
+  /**
+   * Creates a SQL command for renaming a DB table.
+   *
+   * @param fromTable
+   * @param toTable
+   * @returns {Promise<*>}
+   */
+  async renameTable(fromTable, toTable) {
+    let sql = await this.db.getQueryBuilder().renameTable(fromTable, toTable);
+    this.setSql(sql);
+    return await this.execute();
+  }
+
+  /**
+   * Creates a SQL command for dropping a DB table.
+   *
+   * @param table
+   * @returns {Promise<*>}
+   */
   async dropTable(table) {
     let sql = await this.db.getQueryBuilder().dropTable(table);
     this.setSql(sql);
