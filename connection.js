@@ -87,6 +87,16 @@ class BaseConnection extends Base {
   }
 
   /**
+   * Create a column schema builder instance giving the type and value precision.
+   * @param type
+   * @param length
+   * @returns {*}
+   */
+  createColumnSchemaBuilder(type, length) {
+    return this.getSchema().createColumnSchemaBuilder(type, length)
+  }
+
+  /**
    * Creates a command for execution.
    *
    * @param {string"null} sql - the SQL statement to be executed

@@ -1,6 +1,7 @@
 const Base = require('./base');
 const QueryBuilder = require('./query-builder');
 const helper = require('./helper');
+const ColumnSchemaBuilder = require('./column-schema-builder');
 
 const TYPE_SCHEMA = 'schema';
 
@@ -259,6 +260,17 @@ class Schema extends Base {
     }
 
     return 'string';
+  }
+
+  /**
+   * Create a column schema builder instance giving the type and value precision.
+   *
+   * @param {string} type
+   * @param {string|number|[]|null} length
+   * @returns {ColumnSchemaBuilder}
+   */
+  createColumnSchemaBuilder(type, length = null) {
+    return new ColumnSchemaBuilder(type, length, this.db)
   }
 
 }

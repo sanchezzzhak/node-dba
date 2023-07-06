@@ -289,3 +289,5 @@ class ColumnSchemaBuilder {
   }
 
 }
+
+module.exports = ColumnSchemaBuilder;
