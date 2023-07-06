@@ -9,9 +9,9 @@ const {argv} = require('node:process');
 const prompts = require('prompts');
 const {SingleBar} = require('cli-progress');
 
-const  CONFIRM_ENUMS = ['y', 'yes', 'n', 'no'];
-const  CONFIRM_ENUM_YES = ['y', 'yes'];
-const  CONFIRM_ENUM_NO = ['n', 'no'];
+const CONFIRM_ENUMS = ['y', 'yes', 'n', 'no'];
+const CONFIRM_ENUM_YES = ['y', 'yes'];
+const CONFIRM_ENUM_NO = ['n', 'no'];
 
 class MigrationManager extends Base {
 
@@ -105,9 +105,10 @@ class MigrationManager extends Base {
   }
 
   /**
-   * Apply up migrations for array
+   * Apply up or Revert down migrations for array
    *
-   * @param migrations
+   * @param {[]} migrations - migrations array
+   * @param {string} command - up or down command
    * @returns {Promise<boolean>}
    */
   async processMigration(migrations, command) {
@@ -160,7 +161,7 @@ class MigrationManager extends Base {
             ? color.red(
                 `*** failed to apply ${name} (time: ${(time / 1000)}s)\n`)
             : color.red(
-                `*** failed to revert ${name} (time: ${(time / 1000)}s)\n`)
+                `*** failed to revert ${name} (time: ${(time / 1000)}s)\n`),
         );
 
         return false;
@@ -209,6 +210,7 @@ class MigrationManager extends Base {
           color.green(`No new migration found. Your system is up-to-date`));
       return true;
     }
+
     migrations.sort();
     if (limit > 0) {
       migrations = migrations.splice(0, limit);
@@ -226,10 +228,12 @@ class MigrationManager extends Base {
         validate: value => CONFIRM_ENUMS.includes(value.toLowerCase()),
       },
     ]);
+
     if (CONFIRM_ENUM_YES.includes(answer.value)) {
       return await this.processMigration(migrations,
           MigrationManager.COMMAND_UP);
     }
+
     if (CONFIRM_ENUM_NO.includes(answer.value)) {
       console.log(color.red('Operations are canceled.'));
       return true;
@@ -237,34 +241,47 @@ class MigrationManager extends Base {
   }
 
   generateNameForVersion(version) {
-      let date = new Date();
-      let prefix = date.getFullYear().toString(10).substring(2)
-          + (date.getMonth()+1).toString(10).padStart(2,'0')
-          + date.getDate().toString(10).padStart(2,'0')
-          + '_'
-          + date.getHours().toString(10).padStart(2,'0')
-          + date.getMinutes().toString(10).padStart(2,'0')
-          + date.getSeconds().toString(10).padStart(2,'0')
-
-      return `${prefix}_${version}`;
+    let date = new Date();
+    let prefix = date.getFullYear().toString(10).substring(2)
+        + (date.getMonth() + 1).toString(10).padStart(2, '0')
+        + date.getDate().toString(10).padStart(2, '0')
+        + '_'
+        + date.getHours().toString(10).padStart(2, '0')
+        + date.getMinutes().toString(10).padStart(2, '0')
+        + date.getSeconds().toString(10).padStart(2, '0');
+    let name = helper.words(version).map(_ => _.toLowerCase()).join('_');
+    return `m${prefix}_${name}`;
   }
 
+  /**
+   * Create migration blank
+   *
+   * @param version
+   * @returns {Promise<boolean>}
+   */
   async runCommandCreate(version) {
-    let regex = /^[\w_]{1,220}$/;
-    if (version && !regex.test(version) || version && version.length > 220) {
-      console.log(color.red('The migration name should contain letters, digits, underscore characters only. ([\\w_ ]{1,220})'))
-      return false;
-    }
+    let regex = /^[\w_ ]{1,220}$/;
+
+    const validate = (version) => {
+      return version && regex.test(version) && version && version.length < 220;
+    };
+
     if (!version) {
       let answer = await prompts([
         {
           type: 'text',
           name: 'value',
-          message: `Set migration name([\\w_]{1,220})?`,
-          validate: value => regex.test(value),
+          message: `Set migration name(${regex.toString()})?`,
+          validate: value => validate(value),
         },
       ]);
       version = answer.value;
+    }
+
+    if (!validate(version)) {
+      console.log(color.red(
+          'The migration name should contain letters, digits, underscore characters only. ([\\w_ ]{1,220})'));
+      return false;
     }
 
     const prefixVersion = this.generateNameForVersion(version);
@@ -280,15 +297,35 @@ class MigrationManager extends Base {
     ]);
     if (CONFIRM_ENUM_YES.includes(answer.value)) {
 
+      const code = `
+const {Migration} = require('node-dba');
 
-      return true;
+class ${prefixVersion} extends Migration {
+  async up(){
+    return true;
+  }
+
+  async down(){
+    return true;
+  }
+}
+module.exports = ${prefixVersion}
+`;
+      try {
+        fs.writeFileSync(file, code);
+        console.log(color.green('New migration created successfully'));
+        return true;
+      } catch (e) {
+        console.log(color.red('Failed to create new migration'));
+        console.error(e);
+      }
+      return false;
     }
     if (CONFIRM_ENUM_NO.includes(answer.value)) {
       console.log(color.red('Operations are canceled.'));
       return true;
     }
   }
-
 
   /**
    * Down migrations command
@@ -302,21 +339,20 @@ class MigrationManager extends Base {
     } else {
       limit = parseInt(limit);
       if (limit < 1) {
-        console.log(color.red('The limit must be greater than 0.'))
+        console.log(color.red('The limit must be greater than 0.'));
         return false;
       }
     }
 
     const history = await this.getMigrationHistory(limit);
     if (helper.empty(history)) {
-      console.log(color.yellow('No migration has been done before.'))
+      console.log(color.yellow('No migration has been done before.'));
       return false;
     }
     let migrations = Object.keys(history);
     if (limit > 0) {
       migrations = migrations.splice(0, limit);
     }
-
     console.log(color.yellow(`Total migrations to be revered:`));
     migrations.forEach((migration => {
       console.log(color.yellow(`  ${migration}`));
@@ -330,10 +366,12 @@ class MigrationManager extends Base {
         validate: value => CONFIRM_ENUMS.includes(value.toLowerCase()),
       },
     ]);
+
     if (CONFIRM_ENUM_YES.includes(answer.value)) {
       return await this.processMigration(migrations,
           MigrationManager.COMMAND_DOWN);
     }
+
     if (CONFIRM_ENUM_NO.includes(answer.value)) {
       console.log(color.red('Operations are canceled.'));
       return true;
