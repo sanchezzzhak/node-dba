@@ -1,54 +1,54 @@
-exports.empty = function (...args) {
+exports.empty = function(...args) {
   return (
-    args.filter((mixed) => {
-      return (
-        mixed === '' ||
-        mixed === 0 ||
-        mixed === '0' ||
-        mixed === null ||
-        mixed === false ||
-        (Array.isArray(mixed) && mixed.length === 0)
-      );
-    }).length === args.length
+      args.filter((mixed) => {
+        return (
+            mixed === '' ||
+            mixed === 0 ||
+            mixed === '0' ||
+            mixed === null ||
+            mixed === false ||
+            (Array.isArray(mixed) && mixed.length === 0)
+        );
+      }).length === args.length
   );
 };
 
-exports.isEmpty = function (value) {
+exports.isEmpty = function(value) {
   return value === '' || value === void 0 ||
       (Array.isArray(value) && value.length === 0) ||
       value === null ||
       (typeof value === 'object' && Object.keys(value).length === 0) ||
       (typeof value === 'string' && value.trim() === '');
-}
+};
 
-exports.isString = function (str) {
+exports.isString = function(str) {
   return typeof str === 'string' || str instanceof String;
-}
+};
 
-exports.merge = function (param1, param2) {
+exports.merge = function(param1, param2) {
   return {...param1, ...param2};
-}
+};
 
-exports.extractObject = function (obj){
+exports.extractObject = function(obj) {
   let [key, value] = Object.entries(obj)[0];
   return {key, value};
-}
+};
 
-exports.replaceCallback = function (pattern, callback, string) {
+exports.replaceCallback = function(pattern, callback, string) {
   [...string.matchAll(pattern)].forEach(value => {
     string = string.replace(value[0], callback(value));
   });
   return string;
-}
+};
 
 /**
  * @param obj
  * @param right
  * @returns {boolean}
  */
-exports.instanceOf = function (obj, right) {
+exports.instanceOf = function(obj, right) {
   return (!Array.isArray(obj) && typeof obj === 'object' && obj instanceof
-    right);
+      right);
 };
 
 exports.isTraversable = function(obj) {
@@ -56,15 +56,15 @@ exports.isTraversable = function(obj) {
       || (obj !== null && ['function', 'object'].includes(typeof obj));
 };
 
-exports.isNumber = function (key) {
+exports.isNumber = function(key) {
   return /^\d+$/.test(key);
-}
+};
 
-exports.isset = function (obj) {
+exports.isset = function(obj) {
   return !(typeof obj === 'undefined' || obj === null || obj.length === 0);
 };
 
-exports.strncmp = function (str, search, pos) {
+exports.strncmp = function(str, search, pos) {
   return str.startsWith(search, pos);
 };
 
@@ -73,32 +73,30 @@ exports.strncmp = function (str, search, pos) {
  * @param {Object} obj
  * @returns {null|string}
  */
-exports.className = function (obj) {
+exports.className = function(obj) {
   let className = null;
   // is called class
   if (typeof obj === 'object' && obj.constructor) {
-     className = obj.constructor.name;
+    className = obj.constructor.name;
   }
   // is static class
   if (className === null) {
-    className = obj.toString().split ('(' || /s+/)[0]
-    .split (' ' || /s+/)[1];
+    className = obj.toString().split('(' || /s+/)[0].split(' ' || /s+/)[1];
   }
   return className;
-}
+};
 
 exports.camelize = function(text) {
-  const a = text.toLowerCase()
-  .replace(/[-_\s.]+(.)?/g, (_, c) => c ? c.toUpperCase() : '');
+  const a = text.toLowerCase().
+  replace(/[-_\s.]+(.)?/g, (_, c) => c ? c.toUpperCase() : '');
   return a.substring(0, 1).toLowerCase() + a.substring(1);
-}
+};
 
-exports.words = function (text) {
-  const parts = text
-  .replace(/((?<=\p{Ll})\p{Lu}|(?<=\p{L})\p{Lu}(?=\p{Ll}))/u, ' $1');
-  return parts.split(/\s/)
-  .filter(val => val !=='')
-}
+exports.words = function(text) {
+  const parts = text.replace(/((?<=\p{Ll})\p{Lu}|(?<=\p{L})\p{Lu}(?=\p{Ll}))/u,
+      ' $1');
+  return parts.split(/\s/).filter(val => val !== '');
+};
 
 /**
  * @param {string} text
@@ -109,9 +107,8 @@ exports.ucfirst = function(text) {
 };
 
 exports.lcfirst = function(text) {
-  return text.charAt(0).toLowerCase() + text.substr( 1 );
+  return text.charAt(0).toLowerCase() + text.substr(1);
 };
-
 
 /**
  * compare arrays a with b and get everything in b
@@ -119,7 +116,7 @@ exports.lcfirst = function(text) {
  * @param b
  * @returns {*}
  */
-exports.compareArrayExist = function (a, b) {
+exports.compareArrayExist = function(a, b) {
   return a.filter((n) => b.indexOf(n) !== -1);
 };
 /**
@@ -128,28 +125,27 @@ exports.compareArrayExist = function (a, b) {
  * @param b
  * @returns {*}
  */
-exports.compareArrayNotExist = function (a, b) {
+exports.compareArrayNotExist = function(a, b) {
   return a.filter((n) => b.indexOf(n) === -1);
 };
 
-exports.unique = function (value, index, self) {
+exports.unique = function(value, index, self) {
   return self.indexOf(value) === index;
 };
 
 exports.count = function(params) {
   return Array.isArray(params) ? params.length
       : (typeof params === 'object')
-      ? Object.keys(params).length: 0
-}
+          ? Object.keys(params).length : 0;
+};
 
 /**
  * @param arr1 {Array}
  * @returns {*}
  */
-exports.arrayUnique = function (arr1) {
+exports.arrayUnique = function(arr1) {
   return arr1.filter((v, i, a) => a.indexOf(v) === i);
 };
-
 
 /**
  * Compare versions
@@ -182,7 +178,7 @@ exports.versionCompare = function(ver1, ver2) {
     return -1;
   }
   return 0;
-}
+};
 
 /***
  *
@@ -191,7 +187,7 @@ exports.versionCompare = function(ver1, ver2) {
  * @returns {string}
  * @description As soon as there are more functions from locutus to be used, I will think about connecting the locutus dependency
  */
-exports.addcslashes = function (str, charlist) {
+exports.addcslashes = function(str, charlist) {
   //  discuss at: https://locutus.io/php/addcslashes/
   // original by: Brett Zamir (https://brett-zamir.me)
   //      note 1: We show double backslashes in the return value example
@@ -209,169 +205,190 @@ exports.addcslashes = function (str, charlist) {
   //   _returns 5: "\\r\\a\\n"
   //   _example 6: addcslashes("\r\u0007\n", '\0'); // Do not recognize C escape sequences if not specified
   //   _returns 6: "\r\u0007\n"
-  let target = ''
-  const chrs = []
-  let i = 0
-  let j = 0
-  let c = ''
-  let next = ''
-  let rangeBegin = ''
-  let rangeEnd = ''
-  let chr = ''
-  let begin = 0
-  let end = 0
-  let octalLength = 0
-  let postOctalPos = 0
-  let cca = 0
-  let escHexGrp = []
-  let encoded = ''
-  const percentHex = /%([\dA-Fa-f]+)/g
-  const _pad = function (n, c) {
+  let target = '';
+  const chrs = [];
+  let i = 0;
+  let j = 0;
+  let c = '';
+  let next = '';
+  let rangeBegin = '';
+  let rangeEnd = '';
+  let chr = '';
+  let begin = 0;
+  let end = 0;
+  let octalLength = 0;
+  let postOctalPos = 0;
+  let cca = 0;
+  let escHexGrp = [];
+  let encoded = '';
+  const percentHex = /%([\dA-Fa-f]+)/g;
+  const _pad = function(n, c) {
     if ((n = n + '').length < c) {
-      return new Array(++c - n.length).join('0') + n
+      return new Array(++c - n.length).join('0') + n;
     }
-    return n
-  }
+    return n;
+  };
   for (i = 0; i < charlist.length; i++) {
-    c = charlist.charAt(i)
-    next = charlist.charAt(i + 1)
+    c = charlist.charAt(i);
+    next = charlist.charAt(i + 1);
     if (c === '\\' && next && (/\d/).test(next)) {
       // Octal
-      rangeBegin = charlist.slice(i + 1).match(/^\d+/)[0]
-      octalLength = rangeBegin.length
-      postOctalPos = i + octalLength + 1
-      if (charlist.charAt(postOctalPos) + charlist.charAt(postOctalPos + 1) === '..') {
+      rangeBegin = charlist.slice(i + 1).match(/^\d+/)[0];
+      octalLength = rangeBegin.length;
+      postOctalPos = i + octalLength + 1;
+      if (charlist.charAt(postOctalPos) + charlist.charAt(postOctalPos + 1) ===
+          '..') {
         // Octal begins range
-        begin = rangeBegin.charCodeAt(0)
-        if ((/\\\d/).test(charlist.charAt(postOctalPos + 2) + charlist.charAt(postOctalPos + 3))) {
+        begin = rangeBegin.charCodeAt(0);
+        if ((/\\\d/).test(charlist.charAt(postOctalPos + 2) +
+            charlist.charAt(postOctalPos + 3))) {
           // Range ends with octal
-          rangeEnd = charlist.slice(postOctalPos + 3).match(/^\d+/)[0]
+          rangeEnd = charlist.slice(postOctalPos + 3).match(/^\d+/)[0];
           // Skip range end backslash
-          i += 1
+          i += 1;
         } else if (charlist.charAt(postOctalPos + 2)) {
           // Range ends with character
-          rangeEnd = charlist.charAt(postOctalPos + 2)
+          rangeEnd = charlist.charAt(postOctalPos + 2);
         } else {
-          throw new Error('Range with no end point')
+          throw new Error('Range with no end point');
         }
-        end = rangeEnd.charCodeAt(0)
+        end = rangeEnd.charCodeAt(0);
         if (end > begin) {
           // Treat as a range
           for (j = begin; j <= end; j++) {
-            chrs.push(String.fromCharCode(j))
+            chrs.push(String.fromCharCode(j));
           }
         } else {
           // Supposed to treat period, begin and end as individual characters only, not a range
-          chrs.push('.', rangeBegin, rangeEnd)
+          chrs.push('.', rangeBegin, rangeEnd);
         }
         // Skip dots and range end (already skipped range end backslash if present)
-        i += rangeEnd.length + 2
+        i += rangeEnd.length + 2;
       } else {
         // Octal is by itself
-        chr = String.fromCharCode(parseInt(rangeBegin, 8))
-        chrs.push(chr)
+        chr = String.fromCharCode(parseInt(rangeBegin, 8));
+        chrs.push(chr);
       }
       // Skip range begin
-      i += octalLength
+      i += octalLength;
     } else if (next + charlist.charAt(i + 2) === '..') {
       // Character begins range
-      rangeBegin = c
-      begin = rangeBegin.charCodeAt(0)
+      rangeBegin = c;
+      begin = rangeBegin.charCodeAt(0);
       if ((/\\\d/).test(charlist.charAt(i + 3) + charlist.charAt(i + 4))) {
         // Range ends with octal
-        rangeEnd = charlist.slice(i + 4).match(/^\d+/)[0]
+        rangeEnd = charlist.slice(i + 4).match(/^\d+/)[0];
         // Skip range end backslash
-        i += 1
+        i += 1;
       } else if (charlist.charAt(i + 3)) {
         // Range ends with character
-        rangeEnd = charlist.charAt(i + 3)
+        rangeEnd = charlist.charAt(i + 3);
       } else {
-        throw new Error('Range with no end point')
+        throw new Error('Range with no end point');
       }
-      end = rangeEnd.charCodeAt(0)
+      end = rangeEnd.charCodeAt(0);
       if (end > begin) {
         // Treat as a range
         for (j = begin; j <= end; j++) {
-          chrs.push(String.fromCharCode(j))
+          chrs.push(String.fromCharCode(j));
         }
       } else {
         // Supposed to treat period, begin and end as individual characters only, not a range
-        chrs.push('.', rangeBegin, rangeEnd)
+        chrs.push('.', rangeBegin, rangeEnd);
       }
       // Skip dots and range end (already skipped range end backslash if present)
-      i += rangeEnd.length + 2
+      i += rangeEnd.length + 2;
     } else {
       // Character is by itself
-      chrs.push(c)
+      chrs.push(c);
     }
   }
   for (i = 0; i < str.length; i++) {
-    c = str.charAt(i)
+    c = str.charAt(i);
     if (chrs.indexOf(c) !== -1) {
-      target += '\\'
-      cca = c.charCodeAt(0)
+      target += '\\';
+      cca = c.charCodeAt(0);
       if (cca < 32 || cca > 126) {
         // Needs special escaping
         switch (c) {
           case '\n':
-            target += 'n'
-            break
+            target += 'n';
+            break;
           case '\t':
-            target += 't'
-            break
+            target += 't';
+            break;
           case '\u000D':
-            target += 'r'
-            break
+            target += 'r';
+            break;
           case '\u0007':
-            target += 'a'
-            break
+            target += 'a';
+            break;
           case '\v':
-            target += 'v'
-            break
+            target += 'v';
+            break;
           case '\b':
-            target += 'b'
-            break
+            target += 'b';
+            break;
           case '\f':
-            target += 'f'
-            break
+            target += 'f';
+            break;
           default:
             // target += _pad(cca.toString(8), 3);break; // Sufficient for UTF-16
-            encoded = encodeURIComponent(c)
+            encoded = encodeURIComponent(c);
             // 3-length-padded UTF-8 octets
             if ((escHexGrp = percentHex.exec(encoded)) !== null) {
               // already added a slash above:
-              target += _pad(parseInt(escHexGrp[1], 16).toString(8), 3)
+              target += _pad(parseInt(escHexGrp[1], 16).toString(8), 3);
             }
             while ((escHexGrp = percentHex.exec(encoded)) !== null) {
-              target += '\\' + _pad(parseInt(escHexGrp[1], 16).toString(8), 3)
+              target += '\\' + _pad(parseInt(escHexGrp[1], 16).toString(8), 3);
             }
-            break
+            break;
         }
       } else {
         // Perform regular backslashed escaping
-        target += c
+        target += c;
       }
     } else {
       // Just add the character unescaped
-      target += c
+      target += c;
     }
   }
-  return target
-}
+  return target;
+};
+
+/**
+ *
+ * @param {string} str
+ * @param {{}} dic
+ * @returns {{val, key: *, token}}
+ * @author https://gist.github.com/dsheiko/2774533
+ */
+exports.strtr = function(str, dic) {
+  const makeToken = (inx) => `{{###~${inx}~###}}`,
+      tokens = Object.keys(dic).map((key, inx) => ({
+        key,
+        val: dic[key],
+        token: makeToken(inx),
+      })),
+      tokenizedStr = tokens.reduce((carry, entry) =>
+          carry.replace(new RegExp(entry.key, 'g'), entry.token), str);
+  return tokens.reduce((carry, entry) =>
+      carry.replace(new RegExp(entry.token, 'g'), entry.val), tokenizedStr);
+};
 
 exports.bindec = function(binaryString) {
-  binaryString = (binaryString + '').replace(/[^01]/gi, '')
-  return parseInt(binaryString, 2)
-}
+  binaryString = (binaryString + '').replace(/[^01]/gi, '');
+  return parseInt(binaryString, 2);
+};
 
 exports.ksort = function(objects) {
-  return Object.keys(objects).sort().reduce(function (result, key) {
+  return Object.keys(objects).sort().reduce(function(result, key) {
     result[key] = objects[key];
     return result;
   }, {});
-}
+};
 
-
-exports.splitCommaString = function (value) {
-  return value.trim().split(/\s*,\s*/).filter(val => val !== '')
-}
+exports.splitCommaString = function(value) {
+  return value.trim().split(/\s*,\s*/).filter(val => val !== '');
+};
