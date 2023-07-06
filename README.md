@@ -89,6 +89,26 @@ class UserTable extends Migration {
 module.exports = UserTable;
 ```
 
+Migration class methods available for `up()/down()` methods
+```js
+ /*** @type this {Migration} */
+ await this.createTable ('table name', {}, null);
+ await this.dropTable ('table name')
+ await this.renameTable('table name', 'table new name')
+ await this.truncateTable('table name')
+ await this.addColumn('table name')
+ await this.addColumn('table name', 'column name', type);
+ await this.dropColumn('table name', 'column name');
+ await this.alterColumn('table name', 'column name', type);
+ await this.renameColumn('table name', 'column name', 'column new name'); 
+ await this.addPrimaryKey('name', 'table name', columns);
+ await this.dropPrimaryKey('name', 'table name');
+ await this.createIndex('name', 'table name', columns, unique = false);
+ await this.dropIndex('name', 'table name');
+ await this.addForeignKey('name ForeignKey', 'table name', columns, refTable, refColumns, delete = null, update = null); 
+ await this.dropForeignKey('name ForeignKey', 'table name');
+```
+
 #### CRUD
 Create `bin/dba-crud.js` file locally and implement the following code.
 ```js
