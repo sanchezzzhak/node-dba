@@ -279,8 +279,9 @@ class Command extends Base {
   async addColumn(table, column, type) {
     let sql = await this.db.getQueryBuilder().addColumn(table, column, type);
     this.setSql(sql);
-    // ..resolveTableSchemaRefresh
-    return await this.execute();
+    let result = await this.execute();
+    await this.resolveTableSchemaRefresh(table);
+    return result;
   }
 
   /**
@@ -293,13 +294,14 @@ class Command extends Base {
   async dropColumn(table, column) {
     let sql = await this.db.getQueryBuilder().dropColumn(table, column);
     this.setSql(sql);
-    // ..resolveTableSchemaRefresh
-    return await this.execute();
+    let result = await this.execute();
+    await this.resolveTableSchemaRefresh(table);
+    return result;
   }
 
   /**
    * Creates a SQL and execute command for renaming a column.
-   * 
+   *
    * @param {string} table
    * @param {string} fromColumn
    * @param {string} toColumn
@@ -308,12 +310,13 @@ class Command extends Base {
   async renameColumn(table, fromColumn, toColumn) {
     let sql = await this.db.getQueryBuilder().renameColumn(
         table,
-        fromColumn, 
-        toColumn
+        fromColumn,
+        toColumn,
     );
     this.setSql(sql);
-    // ..resolveTableSchemaRefresh
-    return await this.execute();
+    let result = await this.execute();
+    await this.resolveTableSchemaRefresh(table);
+    return result;
   }
 
   /**
@@ -328,11 +331,12 @@ class Command extends Base {
     let sql = await this.db.getQueryBuilder().alterColumn(
         table,
         column,
-        type
+        type,
     );
     this.setSql(sql);
-    // ..resolveTableSchemaRefresh
-    return await this.execute();
+    let result = await this.execute();
+    await this.resolveTableSchemaRefresh(table);
+    return result;
   }
 
   /**
@@ -347,11 +351,12 @@ class Command extends Base {
     let sql = await this.db.getQueryBuilder().addPrimaryKey(
         name,
         table,
-        columns
+        columns,
     );
     this.setSql(sql);
-    // ..resolveTableSchemaRefresh
-    return await this.execute();
+    let result = await this.execute();
+    await this.resolveTableSchemaRefresh(table);
+    return result;
   }
 
   /**
@@ -364,10 +369,67 @@ class Command extends Base {
   async dropPrimaryKey(name, table) {
     let sql = await this.db.getQueryBuilder().dropPrimaryKey(name, table);
     this.setSql(sql);
-    // ..resolveTableSchemaRefresh
-    return await this.execute();
+    let result = await this.execute();
+    await this.resolveTableSchemaRefresh(table);
+    return result;
   }
 
+  /**
+   * Creates a SQL and execute command for adding a foreign key constraint to an existing table.
+   * The method will properly quote the table and column names.
+   *
+   * @param {string} name - the name of the foreign key constraint.
+   * @param {string} table - the table that the foreign key constraint will be added to.
+   * @param {string|{}} columns - the name of the column to that the constraint will be added on.
+   * If there are multiple columns, separate them with commas or use an array to represent them.
+   * @param {string} refTable - the table that the foreign key references to.
+   * @param {string|{}} refColumns -  the name of the column that the foreign key references to.
+   * * If there are multiple columns, separate them with commas or use an array to represent them.
+   * @param {null|string} onDelete - the ON DELETE option. Most DBMS support these options: RESTRICT, CASCADE, NO ACTION, SET DEFAULT, SET NULL
+   * @param {null|string} onUpdate - the ON UPDATE option. Most DBMS support these options: RESTRICT, CASCADE, NO ACTION, SET DEFAULT, SET NULL
+   * @returns {Promise<*>}
+   */
+  async addForeignKey(
+      name,
+      table,
+      columns,
+      refColumns,
+      refTable,
+      onDelete = null,
+      onUpdate = null
+  ) {
+    let sql = await this.db.getQueryBuilder().addForeignKey(
+        name,
+        table,
+        columns,
+        refTable,
+        refColumns,
+        onDelete,
+        onUpdate
+    );
+    this.setSql(sql);
+    let result = await this.execute();
+    await this.resolveTableSchemaRefresh(table);
+    return result;
+  }
+
+  /**
+   * Creates a SQL and execute command for dropping a foreign key constraint.
+   * @param {string} name - the name of the foreign key constraint to be dropped. The name will be properly quoted by the method.
+   * @param {string} table - the table whose foreign is to be dropped. The name will be properly quoted by the method.
+   * @returns {Promise<*>}
+   */
+  async dropForeignKey(name, table) {
+    let sql = await this.db.getQueryBuilder().dropForeignKey(name, table);
+    this.setSql(sql);
+    let result = await this.execute();
+    await this.resolveTableSchemaRefresh(table);
+    return result;
+  }
+
+  async resolveTableSchemaRefresh(table) {
+    // todo add
+  }
 
   async execute() {
     const sql = this.getRawSql();

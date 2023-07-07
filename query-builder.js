@@ -688,8 +688,79 @@ class QueryBuilder {
    */
   async renameColumn(table, fromColumn, toColumn) {
     return `ALTER TABLE ${this.db.quoteTableName(
-        table)} RENAME COLUMN  ${this.db.quoteColumnName(
+        table)} RENAME COLUMN ${this.db.quoteColumnName(
         fromColumn)} TO ${this.db.quoteColumnName(toColumn)}`;
+  }
+
+  /**
+   * Builds a SQL statement for adding a foreign key constraint to an existing table.
+   * The method will properly quote the table and column names.
+   *
+   * @param {string} name - the name of the foreign key constraint.
+   * @param {string} table - the table that the foreign key constraint will be added to.
+   * @param {string|{}} columns - the name of the column to that the constraint will be added on.
+   * If there are multiple columns, separate them with commas or use an array to represent them.
+   * @param {string} refTable - the table that the foreign key references to.
+   * @param {string|{}} refColumns -  the name of the column that the foreign key references to.
+   * * If there are multiple columns, separate them with commas or use an array to represent them.
+   * @param {null|string} onDelete - the ON DELETE option. Most DBMS support these options: RESTRICT, CASCADE, NO ACTION, SET DEFAULT, SET NULL
+   * @param {null|string} onUpdate - the ON UPDATE option. Most DBMS support these options: RESTRICT, CASCADE, NO ACTION, SET DEFAULT, SET NULL
+   * @returns {Promise<string>}
+   */
+  async addForeignKey(
+      name,
+      table,
+      columns,
+      refTable,
+      refColumns,
+      onDelete,
+      onUpdate,
+  ) {
+    return `ALTER TABLE ${this.db.quoteTableName(
+        table)} ADD CONSTRAINT ${this.db.quoteColumnName(
+        name)} FOREIGN KEY (${this.buildColumns(
+        columns)}) REFERENCES ${this.db.quoteTableName(
+        refTable)} (${this.buildColumns(
+        refColumns)})${(onDelete !== null
+        ? ' ON DELETE ' + onDelete
+        : '')}${(onUpdate !== null)
+        ? ' ON UPDATE ' + onUpdate
+        : ''}`;
+  }
+
+  /**
+   * Builds a SQL statement for dropping a foreign key constraint.
+   * @param {string} name
+   * @param {string} table
+   * @returns {Promise<string>}
+   */
+  async dropForeignKey(name, table) {
+    return `ALTER TABLE ${this.db.quoteTableName(
+        table)} ROP CONSTRAINT ${this.db.quoteColumnName(name)}`;
+  }
+
+  /**
+   * Processes columns and properly quotes them if necessary.
+   * It will join all columns into a string with comma as separators.
+   * @param columns
+   * @returns {string|*}
+   */
+  buildColumns(columns) {
+    if (typeof columns === 'string') {
+      if (columns.indexOf('(') !== -1) {
+        return columns;
+      }
+      columns = helper.splitCommaString(columns)
+    }
+    for(let key in columns) {
+      if (helper.instanceOf(columns[key], Expression)) {
+        columns[key] = this.buildExpression(columns[key]);
+      } else if(String(columns[key]).indexOf('(') === -1) {
+        columns[key] = this.db.quoteColumnName(columns[key]);
+      }
+    }
+
+    return columns.join(', ')
   }
 
   /**
