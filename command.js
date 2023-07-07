@@ -380,10 +380,10 @@ class Command extends Base {
    *
    * @param {string} name - the name of the foreign key constraint.
    * @param {string} table - the table that the foreign key constraint will be added to.
-   * @param {string|{}} columns - the name of the column to that the constraint will be added on.
+   * @param {string|[]} columns - the name of the column to that the constraint will be added on.
    * If there are multiple columns, separate them with commas or use an array to represent them.
    * @param {string} refTable - the table that the foreign key references to.
-   * @param {string|{}} refColumns -  the name of the column that the foreign key references to.
+   * @param {string|[]} refColumns -  the name of the column that the foreign key references to.
    * * If there are multiple columns, separate them with commas or use an array to represent them.
    * @param {null|string} onDelete - the ON DELETE option. Most DBMS support these options: RESTRICT, CASCADE, NO ACTION, SET DEFAULT, SET NULL
    * @param {null|string} onUpdate - the ON UPDATE option. Most DBMS support these options: RESTRICT, CASCADE, NO ACTION, SET DEFAULT, SET NULL
@@ -396,7 +396,7 @@ class Command extends Base {
       refColumns,
       refTable,
       onDelete = null,
-      onUpdate = null
+      onUpdate = null,
   ) {
     let sql = await this.db.getQueryBuilder().addForeignKey(
         name,
@@ -405,7 +405,7 @@ class Command extends Base {
         refTable,
         refColumns,
         onDelete,
-        onUpdate
+        onUpdate,
     );
     this.setSql(sql);
     let result = await this.execute();
@@ -429,6 +429,39 @@ class Command extends Base {
 
   async resolveTableSchemaRefresh(table) {
     // todo add
+  }
+
+  /**
+   * Creates a SQL and execute command for creating a new index.
+   *
+   * @param {string} name
+   * @param {string} table
+   * @param {string|[]} columns
+   * @param {boolean} unique
+   * @returns {Promise<*>}
+   */
+  async createIndex(name, table, columns, unique = false) {
+    let sql = await this.db.getQueryBuilder().
+    createIndex(name, table, columns, unique);
+    this.setSql(sql);
+    let result = await this.execute();
+    await this.resolveTableSchemaRefresh(table);
+    return result;
+  }
+
+  /**
+   * Creates a SQL and execute command for dropping an index.
+   *
+   * @param {string} name
+   * @param {string} table
+   * @returns {Promise<*>}
+   */
+  async dropIndex(name, table) {
+    let sql = await this.db.getQueryBuilder().dropIndex(name, table);
+    this.setSql(sql);
+    let result = await this.execute();
+    await this.resolveTableSchemaRefresh(table);
+    return result;
   }
 
   async execute() {

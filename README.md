@@ -73,15 +73,17 @@ const {Migration} = require('node-dba');
 class UserTable extends Migration {
 
   async up(){
-    await this.createTable('table name', {
+
+    await this.createTable('user', {
         'id' : this.primaryKey(11),
-        'email': this.string()
+        'email': this.string().notNull(),
+        'password': 'varchar(255) not null',
     });
     return true;
   }
 
   async down(){
-    await this.dropTable('table name');
+    await this.dropTable('user');
     return true;
   }
 }
@@ -90,23 +92,21 @@ module.exports = UserTable;
 ```
 
 Migration class methods available for `up()/down()` methods
-```js
- /*** @type this {Migration} */
- await this.createTable ('table name', {}, null);
- await this.dropTable ('table name')
- await this.renameTable('table name', 'table new name')
- await this.truncateTable('table name')
- await this.addColumn('table name')
- await this.addColumn('table name', 'column name', type);
- await this.dropColumn('table name', 'column name');
- await this.alterColumn('table name', 'column name', type);
- await this.renameColumn('table name', 'column name', 'column new name'); 
- await this.addPrimaryKey('name', 'table name', columns);
- await this.dropPrimaryKey('name', 'table name');
- await this.createIndex('name', 'table name', columns, unique = false);
- await this.dropIndex('name', 'table name');
- await this.addForeignKey('name ForeignKey', 'table name', columns, refTable, refColumns, delete = null, update = null); 
- await this.dropForeignKey('name ForeignKey', 'table name');
+```
+ await this.createTable(table:string, columns:{}, options:string)
+ await this.dropTable(table:string)
+ await this.renameTable(table:string, newTable:string)
+ await this.truncateTable(table:string)
+ await this.addColumn(table:string, column:string, type:string|this.string())
+ await this.dropColumn(table:string, column:string,);
+ await this.alterColumn(table:string, column:string, type:string|this.string());
+ await this.renameColumn(table:string, column:string, newColumn:string); 
+ await this.addPrimaryKey(name:string, table:string, columns:string|array);
+ await this.dropPrimaryKey(name:string, table:string);
+ await this.createIndex(name:string, table:string, columns:string|array, unique = false);
+ await this.dropIndex(name:string, table:string);
+ await this.addForeignKey(name:string, table:string, columns:string|array, refTable:string, refColumns:string|array, onDelete:null|string, onUpdate:null|string); 
+ await this.dropForeignKey(name:string, table:string);
 ```
 
 #### CRUD

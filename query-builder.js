@@ -698,10 +698,10 @@ class QueryBuilder {
    *
    * @param {string} name - the name of the foreign key constraint.
    * @param {string} table - the table that the foreign key constraint will be added to.
-   * @param {string|{}} columns - the name of the column to that the constraint will be added on.
+   * @param {string|[]} columns - the name of the column to that the constraint will be added on.
    * If there are multiple columns, separate them with commas or use an array to represent them.
    * @param {string} refTable - the table that the foreign key references to.
-   * @param {string|{}} refColumns -  the name of the column that the foreign key references to.
+   * @param {string|[]} refColumns -  the name of the column that the foreign key references to.
    * * If there are multiple columns, separate them with commas or use an array to represent them.
    * @param {null|string} onDelete - the ON DELETE option. Most DBMS support these options: RESTRICT, CASCADE, NO ACTION, SET DEFAULT, SET NULL
    * @param {null|string} onUpdate - the ON UPDATE option. Most DBMS support these options: RESTRICT, CASCADE, NO ACTION, SET DEFAULT, SET NULL
@@ -740,27 +740,57 @@ class QueryBuilder {
   }
 
   /**
+   * Builds a SQL statement for creating a new index.
+   *
+   * @param {string} name
+   * @param {string} table
+   * @param {string|[]} columns
+   * @param {boolean} unique
+   * @returns {Promise<string>}
+   */
+  async createIndex(name, table, columns, unique = false) {
+    return `CREATE ${(unique
+        ? 'UNIQUE INDEX'
+        : 'INDEX')} ${this.db.quoteColumnName(
+        name)} ON ${this.db.quoteTableName(table)} (${this.buildColumns(
+        columns)})`;
+  }
+
+  /**
+   * Builds a SQL statement for dropping an index.
+   *
+   * @param {string} name
+   * @param {string} table
+   * @returns {Promise<string>}
+   */
+  async dropIndex(name, table) {
+    return `DROP INDEX ${this.db.quoteColumnName(
+        name)} ON ${this.db.quoteTableName(table)}`;
+  }
+
+  /**
    * Processes columns and properly quotes them if necessary.
    * It will join all columns into a string with comma as separators.
-   * @param columns
-   * @returns {string|*}
+   *
+   * @param {string|[]} columns
+   * @returns {string}
    */
   buildColumns(columns) {
     if (typeof columns === 'string') {
       if (columns.indexOf('(') !== -1) {
         return columns;
       }
-      columns = helper.splitCommaString(columns)
+      columns = helper.splitCommaString(columns);
     }
-    for(let key in columns) {
+    for (let key in columns) {
       if (helper.instanceOf(columns[key], Expression)) {
         columns[key] = this.buildExpression(columns[key]);
-      } else if(String(columns[key]).indexOf('(') === -1) {
+      } else if (String(columns[key]).indexOf('(') === -1) {
         columns[key] = this.db.quoteColumnName(columns[key]);
       }
     }
 
-    return columns.join(', ')
+    return columns.join(', ');
   }
 
   /**
