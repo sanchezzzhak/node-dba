@@ -1,6 +1,7 @@
 const Base = require('./base');
 const QueryBuilder = require('./query-builder');
 const Command = require('./command');
+const ColumnSchemaBuilder = require('./column-schema-builder');
 const helper = require('./helper');
 const ActiveQuery = require('./active-query');
 const fs = require('node:fs');
@@ -93,8 +94,8 @@ class BaseConnection extends Base {
    * @returns {*}
    */
   createColumnSchemaBuilder(type, length) {
-    return this.getSchema().createColumnSchemaBuilder(type, length)
-  }
+      return new ColumnSchemaBuilder(type, length, this.db)
+    }
 
   /**
    * Creates a command for execution.

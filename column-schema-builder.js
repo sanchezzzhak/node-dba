@@ -1,21 +1,17 @@
-const Base = require('./base');
 const Expression = require('./expression');
 const Schema = require('./schema');
+const helper = require('./helper');
+const SchemaTypes = require('./consts/schema-types');
+const CategoryTypes = require('./consts/category-types');
+
 
 class ColumnSchemaBuilder {
 
-  static CATEGORY_PK = 'pk';
-  static CATEGORY_STRING = 'string';
-  static CATEGORY_NUMERIC = 'numeric';
-  static CATEGORY_TIME = 'time';
-  static CATEGORY_OTHER = 'other';
-
   db;
   rules = {};
-  categoryMap = {};
 
   constructor(type, length, db) {
-    this.rules['type'] = type;
+    this.rules['type'] = String(type);
     this.rules['length'] = length;
     this.db = db;
     this.initCategoryMap();
@@ -25,31 +21,29 @@ class ColumnSchemaBuilder {
    * mapping of abstract column types (keys) to type categories (values).
    */
   initCategoryMap() {
-    this.categoryMap[Schema.TYPE_PK] = ColumnSchemaBuilder.CATEGORY_PK;
-    this.categoryMap[Schema.TYPE_UPK] = ColumnSchemaBuilder.CATEGORY_PK;
-    this.categoryMap[Schema.TYPE_BIGPK] = ColumnSchemaBuilder.CATEGORY_PK;
-    this.categoryMap[Schema.TYPE_UBIGPK] = ColumnSchemaBuilder.CATEGORY_PK;
-    this.categoryMap[Schema.TYPE_CHAR] = ColumnSchemaBuilder.CATEGORY_STRING;
-    this.categoryMap[Schema.TYPE_STRING] = ColumnSchemaBuilder.CATEGORY_STRING;
-    this.categoryMap[Schema.TYPE_TEXT] = ColumnSchemaBuilder.CATEGORY_STRING;
-    this.categoryMap[Schema.TYPE_TINYINT] = ColumnSchemaBuilder.CATEGORY_NUMERIC;
-    this.categoryMap[Schema.TYPE_SMALLINT] = ColumnSchemaBuilder.CATEGORY_NUMERIC;
-    this.categoryMap[Schema.TYPE_INTEGER] = ColumnSchemaBuilder.CATEGORY_NUMERIC;
-    this.categoryMap[Schema.TYPE_BIGINT] = ColumnSchemaBuilder.CATEGORY_NUMERIC;
-    this.categoryMap[Schema.TYPE_FLOAT] = ColumnSchemaBuilder.CATEGORY_NUMERIC;
-    this.categoryMap[Schema.TYPE_DOUBLE] = ColumnSchemaBuilder.CATEGORY_NUMERIC;
-    this.categoryMap[Schema.TYPE_DECIMAL] = ColumnSchemaBuilder.CATEGORY_NUMERIC;
-    this.categoryMap[Schema.TYPE_DATETIME] = ColumnSchemaBuilder.CATEGORY_TIME;
-    this.categoryMap[Schema.TYPE_TIMESTAMP] = ColumnSchemaBuilder.CATEGORY_TIME;
-    this.categoryMap[Schema.TYPE_TIME] = ColumnSchemaBuilder.CATEGORY_TIME;
-    this.categoryMap[Schema.TYPE_DATE] = ColumnSchemaBuilder.CATEGORY_TIME;
-    this.categoryMap[Schema.TYPE_BINARY] = ColumnSchemaBuilder.CATEGORY_OTHER;
-    this.categoryMap[Schema.TYPE_BOOLEAN] = ColumnSchemaBuilder.CATEGORY_NUMERIC;
-    this.categoryMap[Schema.TYPE_MONEY] = ColumnSchemaBuilder.CATEGORY_NUMERIC;
-  }
+    this.categoryMap = {};
+    this.categoryMap[SchemaTypes.TYPE_PK] = CategoryTypes.CATEGORY_PK;
+    this.categoryMap[SchemaTypes.TYPE_UPK] = CategoryTypes.CATEGORY_PK;
+    this.categoryMap[SchemaTypes.TYPE_BIGPK] = CategoryTypes.CATEGORY_PK;
+    this.categoryMap[SchemaTypes.TYPE_UBIGPK] = CategoryTypes.CATEGORY_PK;
+    this.categoryMap[SchemaTypes.TYPE_CHAR] = CategoryTypes.CATEGORY_STRING;
+    this.categoryMap[SchemaTypes.TYPE_STRING] = CategoryTypes.CATEGORY_STRING;
+    this.categoryMap[SchemaTypes.TYPE_TEXT] = CategoryTypes.CATEGORY_STRING;
+    this.categoryMap[SchemaTypes.TYPE_TINYINT] = CategoryTypes.CATEGORY_NUMERIC;
+    this.categoryMap[SchemaTypes.TYPE_SMALLINT] = CategoryTypes.CATEGORY_NUMERIC;
+    this.categoryMap[SchemaTypes.TYPE_INTEGER] = CategoryTypes.CATEGORY_NUMERIC;
+    this.categoryMap[SchemaTypes.TYPE_BIGINT] = CategoryTypes.CATEGORY_NUMERIC;
+    this.categoryMap[SchemaTypes.TYPE_FLOAT] = CategoryTypes.CATEGORY_NUMERIC;
+    this.categoryMap[SchemaTypes.TYPE_DOUBLE] = CategoryTypes.CATEGORY_NUMERIC;
+    this.categoryMap[SchemaTypes.TYPE_DECIMAL] = CategoryTypes.CATEGORY_NUMERIC;
+    this.categoryMap[SchemaTypes.TYPE_DATETIME] = CategoryTypes.CATEGORY_TIME;
+    this.categoryMap[SchemaTypes.TYPE_TIMESTAMP] = CategoryTypes.CATEGORY_TIME;
+    this.categoryMap[SchemaTypes.TYPE_TIME] = CategoryTypes.CATEGORY_TIME;
+    this.categoryMap[SchemaTypes.TYPE_DATE] = CategoryTypes.CATEGORY_TIME;
+    this.categoryMap[SchemaTypes.TYPE_BINARY] = CategoryTypes.CATEGORY_OTHER;
+    this.categoryMap[SchemaTypes.TYPE_BOOLEAN] = CategoryTypes.CATEGORY_NUMERIC;
+    this.categoryMap[SchemaTypes.TYPE_MONEY] = CategoryTypes.CATEGORY_NUMERIC;
 
-  getTypeCategory() {
-    return this.categoryMap[this.rules.type] ?? null;
   }
 
   /**
@@ -89,11 +83,11 @@ class ColumnSchemaBuilder {
    */
   unsigned() {
     switch (this.rules['type']) {
-      case Schema.TYPE_PK:
-        this.rules['type'] = Schema.TYPE_UPK;
+      case SchemaTypes.TYPE_PK:
+        this.rules['type'] = String(SchemaTypes.TYPE_UPK);
         break;
-      case Schema.TYPE_BIGPK:
-        this.rules['type'] = Schema.TYPE_UBIGPK;
+      case SchemaTypes.TYPE_BIGPK:
+        this.rules['type'] = String(SchemaTypes.TYPE_UBIGPK);
         break;
     }
     this.rules['isUnsigned'] = true;
@@ -194,7 +188,7 @@ class ColumnSchemaBuilder {
   }
 
   buildDefault() {
-    let defaultValue = this.rules['default'];
+    let defaultValue = this.rules['default'] ?? null;
     if (defaultValue === null) {
       defaultValue = this.rules['isNotNull'] === false ? 'NULL' : null;
     } else if (helper.instanceOf(defaultValue, Expression)) {
@@ -211,11 +205,13 @@ class ColumnSchemaBuilder {
           defaultValue = defaultValue ? 'TRUE' : 'FALSE';
           break;
         default:
-          defaultValue = `'${defaultValue}'`;
+          defaultValue = defaultValue !== void 0
+              ? `'${defaultValue}'`
+              : '';
           break;
       }
     }
-    if (defaultValue === null) {
+    if (helper.isEmpty(defaultValue)) {
       return '';
     }
 
@@ -239,7 +235,7 @@ class ColumnSchemaBuilder {
    * @returns {string}
    */
   buildComment() {
-    return (this.rules['check'] ?? false) !== null
+    return helper.isset(this.rules['check']) && this.rules['check']
         ? ` CHECK (${this.rules['check']})`
         : '';
   }
@@ -282,7 +278,8 @@ class ColumnSchemaBuilder {
 
   toString() {
     let format = '{type}{length}{notnull}{unique}{default}{check}{comment}{append}';
-    if (ColumnSchemaBuilder.CATEGORY_PK === this.getTypeCategory()) {
+    let categoryMap = this.categoryMap[this.rules['type']] ?? null;
+    if (categoryMap !== null && CATEGORY_PK === categoryMap) {
       format = '{type}{check}{comment}{append}';
     }
     return this.build(format);

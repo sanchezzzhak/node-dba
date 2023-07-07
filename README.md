@@ -74,7 +74,7 @@ class UserTable extends Migration {
 
   async up(){
     await this.createTable('table name', {
-        'id' : this.pk(),
+        'id' : this.primaryKey(11),
         'email': this.string()
     });
     return true;

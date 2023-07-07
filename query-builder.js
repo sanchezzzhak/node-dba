@@ -537,7 +537,7 @@ class QueryBuilder {
    * @param {{}} params
    * @returns {Promise<string>}
    */
-  async delete(table, columns, params= {}) {
+  async delete(table, columns, params = {}) {
     let sql = `DELETE FROM ${this.db.quoteTableName(table)}`;
     let where = this.buildWhere(columns, params);
     return where === '' ? sql : sql + ' ' + where;
@@ -550,7 +550,7 @@ class QueryBuilder {
    * @param {{}} columns
    * @param {{}} params
    */
-  async insert(table, columns, params= {}) {
+  async insert(table, columns, params = {}) {
     let {
       names,
       placeholders,
@@ -580,12 +580,10 @@ class QueryBuilder {
   async createTable(table, columns, options = null) {
     const sets = [];
     for (let [column, type] of Object.entries(columns)) {
-      if (typeof column === 'string') {
-        sets.push(
-            `\t${this.db.quoteColumnName(column)} ${this.getColumnType(type)}`);
-      }
+      sets.push(
+          `\t${this.db.quoteColumnName(column)} ${this.getColumnType(type)}`);
     }
-    let sql = `CREATE TABLE ${this.db.quoteTableName(table)} (\n ${sets.join(
+    let sql = `CREATE TABLE ${this.db.quoteTableName(table)} (\n${sets.join(
         ',\n')} \n)`;
     return null === options ? sql : `${sql} ${options}`;
   }
@@ -608,7 +606,8 @@ class QueryBuilder {
    * @returns {Promise<string>}
    */
   async renameTable(fromTable, toTable) {
-    return `RENAME TABLE ${this.db.quoteTableName(fromTable)} TO ${this.db.quoteTableName(toTable)}`;
+    return `RENAME TABLE ${this.db.quoteTableName(
+        fromTable)} TO ${this.db.quoteTableName(toTable)}`;
   }
 
   /**
@@ -619,6 +618,92 @@ class QueryBuilder {
    */
   async truncateTable(table) {
     return `TRUNCATE TABLE ${this.db.quoteTableName(table)}`;
+  }
+
+  /**
+   * Builds a SQL statement for adding a primary key constraint to an existing table.
+   *
+   * @param {string} name
+   * @param {string} table
+   * @param {string|[]} columns
+   * @returns {Promise<string>}
+   */
+  async addPrimaryKey(name, table, columns) {
+    if (typeof columns === 'string') {
+      columns = helper.splitCommaString(columns);
+    }
+    for (let key in columns) {
+      columns[key] = this.db.quoteColumnName(columns[key]);
+    }
+    return `ALTER TABLE ${this.db.quoteTableName(
+        table)} ADD CONSTRAINT ${this.db.quoteColumnName(
+        name)} PRIMARY KEY (${columns.join(', ')})`;
+  }
+
+  /**
+   * Builds a SQL statement for removing a primary key constraint to an existing table.
+   *
+   * @param {string} name
+   * @param {string} table
+   * @returns {Promise<string>}
+   */
+  async dropPrimaryKey(name, table) {
+    return `ALTER TABLE ${this.db.quoteTableName(
+        table)} DROP CONSTRAINT ${this.db.quoteColumnName(name)}`;
+  }
+
+  /**
+   * Builds a SQL statement for adding a new DB column.
+   *
+   * @param {string} table
+   * @param {string} column
+   * @param {string} type
+   * @returns {Promise<string>}
+   */
+  async addColumn(table, column, type) {
+    return `ALTER TABLE ${this.db.quoteTableName(
+        table)} ADD ${this.db.quoteColumnName(column)} ${this.getColumnType(
+        type)}`;
+  }
+
+  /**
+   * Builds a SQL statement for dropping a DB column.
+   *
+   * @param {string} table
+   * @param {string} column
+   * @returns {Promise<string>}
+   */
+  async dropColumn(table, column) {
+    return `ALTER TABLE ${this.db.quoteTableName(
+        table)} DROP COLUMN  ${this.db.quoteColumnName(column)}`;
+  }
+
+  /**
+   * Builds a SQL statement for renaming a column.
+   *
+   * @param {string} table
+   * @param {string} fromColumn
+   * @param {string} toColumn
+   * @returns {Promise<string>}
+   */
+  async renameColumn(table, fromColumn, toColumn) {
+    return `ALTER TABLE ${this.db.quoteTableName(
+        table)} RENAME COLUMN  ${this.db.quoteColumnName(
+        fromColumn)} TO ${this.db.quoteColumnName(toColumn)}`;
+  }
+
+  /**
+   * Builds a SQL statement for changing the definition of a column.
+   *
+   * @param {string} table
+   * @param {string} column
+   * @param {string} type
+   * @returns {Promise<string>}
+   */
+  async alterColumn(table, column, type) {
+    return `ALTER TABLE ${this.db.quoteTableName(
+        table)} CHANGE ${this.db.quoteColumnName(
+        column)} ${this.getColumnType(type)}`;
   }
 
   getColumnType(type) {

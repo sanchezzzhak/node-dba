@@ -73,19 +73,19 @@ class Command extends Base {
   }
 
   async queryOne() {
-    return await this.#queryInternal('one')
+    return await this.#queryInternal('one');
   }
 
   async queryAll() {
-    return await this.#queryInternal('all')
+    return await this.#queryInternal('all');
   }
 
   async queryColumn() {
-    return await this.#queryInternal('column')
+    return await this.#queryInternal('column');
   }
 
   async queryScalar() {
-    return await this.#queryInternal('scalar')
+    return await this.#queryInternal('scalar');
   }
 
   async #queryInternal(method) {
@@ -164,7 +164,7 @@ class Command extends Base {
   }
 
   /**
-   * Creates an UPDATE AR model command.
+   * Creates an UPDATE AR model and execute command.
    * @example
    * ```
    *
@@ -190,7 +190,7 @@ class Command extends Base {
   }
 
   /**
-   * Creates a DELETE command.
+   * Creates a DELETE and execute command.
    * @example
    * ```js
    * db.createCommand().delete('user', 'status = 0')
@@ -217,7 +217,7 @@ class Command extends Base {
   }
 
   /**
-   * Creates a SQL command for creating a new DB() table.
+   * Creates a SQL and execute command for creating a new DB() table.
    *
    * @param {string} table - the name of the table to be created. The name will be properly quoted by the method.
    * @param {{}} columns - the columns (name => definition) in the new table.()
@@ -225,13 +225,14 @@ class Command extends Base {
    * @returns {Promise<*>}
    */
   async createTable(table, columns, options = null) {
-    let sql = await this.db.getQueryBuilder().createTable(table, columns, options);
+    let sql = await this.db.getQueryBuilder().
+    createTable(table, columns, options);
     this.setSql(sql);
     return await this.execute();
   }
 
   /**
-   * Creates a SQL command for renaming a DB table.
+   * Creates a SQL and execute command for renaming a DB table.
    *
    * @param {string} fromTable
    * @param {string} toTable
@@ -244,7 +245,7 @@ class Command extends Base {
   }
 
   /**
-   * Creates a SQL command for renaming a DB table.
+   * Creates a SQL and execute command  for renaming a DB table.
    *
    * @param {string} table
    * @returns {Promise<*>}
@@ -256,7 +257,7 @@ class Command extends Base {
   }
 
   /**
-   * Creates a SQL command for dropping a DB table.
+   * Creates a SQL and execute command for dropping a DB table.
    *
    * @param {string} table
    * @returns {Promise<*>}
@@ -266,6 +267,107 @@ class Command extends Base {
     this.setSql(sql);
     return await this.execute();
   }
+
+  /**
+   * Creates a SQL and execute command for adding a new DB column.
+   *
+   * @param {string} table
+   * @param {string} column
+   * @param {string|ColumnSchemaBuilder} type
+   * @returns {Promise<*>}
+   */
+  async addColumn(table, column, type) {
+    let sql = await this.db.getQueryBuilder().addColumn(table, column, type);
+    this.setSql(sql);
+    // ..resolveTableSchemaRefresh
+    return await this.execute();
+  }
+
+  /**
+   * Creates a SQL and execute command for dropping a DB column.
+   *
+   * @param {string} table
+   * @param {string} column
+   * @returns {Promise<*>}
+   */
+  async dropColumn(table, column) {
+    let sql = await this.db.getQueryBuilder().dropColumn(table, column);
+    this.setSql(sql);
+    // ..resolveTableSchemaRefresh
+    return await this.execute();
+  }
+
+  /**
+   * Creates a SQL and execute command for renaming a column.
+   * 
+   * @param {string} table
+   * @param {string} fromColumn
+   * @param {string} toColumn
+   * @returns {Promise<*>}
+   */
+  async renameColumn(table, fromColumn, toColumn) {
+    let sql = await this.db.getQueryBuilder().renameColumn(
+        table,
+        fromColumn, 
+        toColumn
+    );
+    this.setSql(sql);
+    // ..resolveTableSchemaRefresh
+    return await this.execute();
+  }
+
+  /**
+   * Creates a SQL and execute command for changing the definition of a column.
+   *
+   * @param {string} table
+   * @param {string} column
+   * @param {string|ColumnSchemaBuilder} type
+   * @returns {Promise<*>}
+   */
+  async alterColumn(table, column, type) {
+    let sql = await this.db.getQueryBuilder().alterColumn(
+        table,
+        column,
+        type
+    );
+    this.setSql(sql);
+    // ..resolveTableSchemaRefresh
+    return await this.execute();
+  }
+
+  /**
+   * Creates a SQL and execute command for adding a primary key constraint to an existing table.
+   *
+   * @param {string} name
+   * @param {string} table
+   * @param {string|[]} columns
+   * @returns {Promise<void>}
+   */
+  async addPrimaryKey(name, table, columns) {
+    let sql = await this.db.getQueryBuilder().addPrimaryKey(
+        name,
+        table,
+        columns
+    );
+    this.setSql(sql);
+    // ..resolveTableSchemaRefresh
+    return await this.execute();
+  }
+
+  /**
+   * Creates a SQL and execute command for removing a primary key constraint to an existing table.
+   *
+   * @param {string} name
+   * @param {string} table
+   * @returns {Promise<*>}
+   */
+  async dropPrimaryKey(name, table) {
+    let sql = await this.db.getQueryBuilder().dropPrimaryKey(name, table);
+    this.setSql(sql);
+    // ..resolveTableSchemaRefresh
+    return await this.execute();
+  }
+
 
   async execute() {
     const sql = this.getRawSql();

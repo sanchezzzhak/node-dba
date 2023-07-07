@@ -1,7 +1,12 @@
-const Schema = require('./schema');
+const SchemaTypes = require('./consts/schema-types');
 
 class Migration {
+
   db;
+
+  constructor(options) {
+    this.db = options.db ?? null;
+  }
 
   /**
    * This method contains the logic to be executed when applying this migration.
@@ -51,7 +56,7 @@ class Migration {
    * @returns {Promise<void>}
    */
   async dropTable(table) {
-    await this.db.createCommand().dropTable(table);
+    return await this.db.createCommand().dropTable(table);
   }
 
   /**
@@ -62,7 +67,7 @@ class Migration {
    * @returns {Promise<void>}
    */
   async renameTable(fromTable, toTable) {
-    await this.db.createCommand().renameTable(fromTable, toTable);
+    return await this.db.createCommand().renameTable(fromTable, toTable);
   }
 
   /**
@@ -72,7 +77,7 @@ class Migration {
    * @returns {Promise<void>}
    */
   async truncateTable(table) {
-    await this.db.createCommand().truncateTable(table);
+    return await this.db.createCommand().truncateTable(table);
   }
 
   /**
@@ -82,8 +87,11 @@ class Migration {
    * @returns {*|ColumnSchemaBuilder}
    */
   primaryKey(length = null) {
-    return this.createColumnSchemaBuilder(Schema.TYPE_PK, length);
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_PK, length);
   }
+
+
+
 
   /**
    * Creates a big primary key column.
@@ -92,7 +100,7 @@ class Migration {
    * @returns {*|ColumnSchemaBuilder}
    */
   bigPrimaryKey(length = null) {
-    return this.createColumnSchemaBuilder(Schema.TYPE_BIGPK, length);
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_BIGPK, length);
   }
 
   /**
@@ -102,7 +110,7 @@ class Migration {
    * @returns {*|ColumnSchemaBuilder}
    */
   char(length = null) {
-    return this.createColumnSchemaBuilder(Schema.TYPE_CHAR, length);
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_CHAR, length);
   }
 
   /**
@@ -112,7 +120,7 @@ class Migration {
    * @returns {*|ColumnSchemaBuilder}
    */
   string(length = null) {
-    return this.createColumnSchemaBuilder(Schema.TYPE_STRING, length);
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_STRING, length);
   }
 
   /**
@@ -121,7 +129,7 @@ class Migration {
    * @returns {*|ColumnSchemaBuilder}
    */
   text() {
-    return this.createColumnSchemaBuilder(Schema.TYPE_STRING);
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_TEXT);
   }
 
   /**
@@ -131,7 +139,7 @@ class Migration {
    * @returns {*|ColumnSchemaBuilder}
    */
   tinyInteger(length = null) {
-    return this.createColumnSchemaBuilder(Schema.TYPE_TINYINT, length);
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_TINYINT, length);
   }
 
   /**
@@ -141,7 +149,7 @@ class Migration {
    * @returns {*|ColumnSchemaBuilder}
    */
   smallInteger(length = null) {
-    return this.createColumnSchemaBuilder(Schema.TYPE_SMALLINT, length);
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_SMALLINT, length);
   }
 
   /**
@@ -151,7 +159,7 @@ class Migration {
    * @returns {*|ColumnSchemaBuilder}
    */
   integer(length = null) {
-    return this.createColumnSchemaBuilder(Schema.TYPE_SMALLINT, length);
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_INTEGER, length);
   }
 
   /**
@@ -161,7 +169,7 @@ class Migration {
    * @returns {*|ColumnSchemaBuilder}
    */
   bigInteger(length) {
-    return this.createColumnSchemaBuilder(Schema.TYPE_BIGINT, length);
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_BIGINT, length);
   }
 
   /**
@@ -171,7 +179,7 @@ class Migration {
    * @returns {*|ColumnSchemaBuilder}
    */
   float(precision = null) {
-    return this.createColumnSchemaBuilder(Schema.TYPE_FLOAT, precision);
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_FLOAT, precision);
   }
 
   /**
@@ -181,7 +189,7 @@ class Migration {
    * @returns {*|ColumnSchemaBuilder}
    */
   double(precision = null) {
-    return this.createColumnSchemaBuilder(Schema.TYPE_DOUBLE, precision);
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_DOUBLE, precision);
   }
 
   /**
@@ -199,7 +207,7 @@ class Migration {
     if (scale !== null) {
       length.push(scale);
     }
-    return this.createColumnSchemaBuilder(Schema.TYPE_DECIMAL, length);
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_DECIMAL, length);
   }
 
   /**
@@ -208,7 +216,7 @@ class Migration {
    * @returns {*|ColumnSchemaBuilder}
    */
   dateTime(precision = null){
-    return this.createColumnSchemaBuilder(Schema.TYPE_DATETIME, precision);
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_DATETIME, precision);
   }
 
   /**
@@ -218,7 +226,7 @@ class Migration {
    * @returns {*|ColumnSchemaBuilder}
    */
   timestamp(precision = null){
-    return this.createColumnSchemaBuilder(Schema.TYPE_TIMESTAMP, precision);
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_TIMESTAMP, precision);
   }
 
   /**
@@ -228,7 +236,7 @@ class Migration {
    * @returns {*|ColumnSchemaBuilder}
    */
   time(precision = null){
-    return this.createColumnSchemaBuilder(Schema.TYPE_TIME, precision);
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_TIME, precision);
   }
 
   /**
@@ -237,7 +245,7 @@ class Migration {
    * @returns {*|ColumnSchemaBuilder}
    */
   date() {
-    return this.createColumnSchemaBuilder(Schema.TYPE_DATE);
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_DATE);
   }
 
   /**
@@ -247,7 +255,7 @@ class Migration {
    * @returns {*|ColumnSchemaBuilder}
    */
   binary(length = null) {
-    return this.createColumnSchemaBuilder(Schema.TYPE_BINARY, length);
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_BINARY, length);
   }
 
   /**
@@ -256,25 +264,23 @@ class Migration {
    * @returns {*|ColumnSchemaBuilder}
    */
   boolean() {
-    return this.createColumnSchemaBuilder(Schema.TYPE_BOOLEAN);
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_BOOLEAN);
   }
 
   /**
    * Creates a money column.
-   * @param {}precision
-   * @param scale
+   * @param {number|null} precision
+   * @param {number|null} scale
    */
   money(precision = null, scale = null) {
-    return this.createColumnSchemaBuilder(Schema.TYPE_MONEY);
-  }
-
-  /**
-   * @param {string} type
-   * @param {number|null} length
-   * @returns {*|ColumnSchemaBuilder}
-   */
-  createColumnSchemaBuilder(type, length= null) {
-    return this.db.createColumnSchemaBuilder(type, length);
+    let length = [];
+    if (precision !== null) {
+      length.push(precision);
+    }
+    if (scale !== null) {
+      length.push(scale);
+    }
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_MONEY, length);
   }
 
 }

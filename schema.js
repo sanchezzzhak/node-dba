@@ -1,7 +1,7 @@
 const Base = require('./base');
 const QueryBuilder = require('./query-builder');
 const helper = require('./helper');
-const ColumnSchemaBuilder = require('./column-schema-builder');
+const SchemaTypes = require('./consts/schema-types');
 
 const TYPE_SCHEMA = 'schema';
 
@@ -11,47 +11,19 @@ class Schema extends Base {
 
   tableQuoteCharacter = '\'';
   columnQuoteCharacter = '"';
-  
   builder;
-  columnSchema;
-  schemaNames = {};
   tableNames = {};
   tableMeteData = {};
   serverVersion = null;
   typeMap = {};
 
-  static TYPE_PK = 'pk';
-  static TYPE_UPK = 'upk';
-  static TYPE_BIGPK = 'bigpk';
-  static TYPE_UBIGPK = 'ubigpk';
-  static TYPE_CHAR = 'char';
-  static TYPE_STRING = 'string';
-  static TYPE_TEXT = 'text';
-  static TYPE_TINYINT = 'tinyint';
-  static TYPE_SMALLINT = 'smallint';
-  static TYPE_INTEGER = 'integer';
-  static TYPE_BIGINT = 'bigint';
-  static TYPE_FLOAT = 'float';
-  static TYPE_DOUBLE = 'double';
-  static TYPE_DECIMAL = 'decimal';
-  static TYPE_DATETIME = 'datetime';
-  static TYPE_TIMESTAMP = 'timestamp';
-  static TYPE_TIME = 'time';
-  static TYPE_DATE = 'date';
-  static TYPE_BINARY = 'binary';
-  static TYPE_BOOLEAN = 'boolean';
-  static TYPE_MONEY = 'money';
-  static TYPE_JSON = 'json';
-
-
-  /***
-   * @property {QueryBuilder}
-   */
-  #builder;
-
   constructor(config = {}) {
     super(config);
     this.setOwnProperties(config);
+  }
+
+  initTypeMap() {
+    this.typeMap = {}
   }
 
   getQueryBuilder() {
@@ -246,31 +218,20 @@ class Schema extends Base {
    */
   getColumnJsType(column) {
     switch (column.type) {
-      case Schema.TYPE_BIGINT:
+      case SchemaTypes.TYPE_BIGINT:
         return 'bigint';
-      case Schema.TYPE_TINYINT:
-      case Schema.TYPE_SMALLINT:
-      case Schema.TYPE_INTEGER:
+      case SchemaTypes.TYPE_TINYINT:
+      case SchemaTypes.TYPE_SMALLINT:
+      case SchemaTypes.TYPE_INTEGER:
         return column.unsigned ? 'string' : 'number';
-      case Schema.TYPE_BOOLEAN:
+      case SchemaTypes.TYPE_BOOLEAN:
         return 'boolean';
-      case Schema.TYPE_FLOAT:
-      case Schema.TYPE_DECIMAL:
+      case SchemaTypes.TYPE_FLOAT:
+      case SchemaTypes.TYPE_DECIMAL:
         return 'number';
     }
 
     return 'string';
-  }
-
-  /**
-   * Create a column schema builder instance giving the type and value precision.
-   *
-   * @param {string} type
-   * @param {string|number|[]|null} length
-   * @returns {ColumnSchemaBuilder}
-   */
-  createColumnSchemaBuilder(type, length = null) {
-    return new ColumnSchemaBuilder(type, length, this.db)
   }
 
 }

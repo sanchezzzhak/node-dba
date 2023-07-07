@@ -3,6 +3,7 @@ const ColumnSchema = require('./column-schema');
 const helper = require('./../helper');
 const TableSchema = require('./../table-schema');
 const Expression = require('./../expression');
+const QueryBuilder = require('./query-builder');
 
 const SERIAL_SEQUENCE_REGEX = /nextval\('"?\w+"?\.?"?\w+"?'(::regclass)?\)/;
 
@@ -10,11 +11,101 @@ class Schema extends BaseSchema {
   tableQuoteCharacter = '"';
   defaultSchema = 'public';
 
-  TYPE_JSONB = 'jsonb';
+  static TYPE_JSONB = 'jsonb';
 
   constructor(config) {
     super(config);
     this.setOwnProperties(config);
+    this.initTypeMap();
+  }
+
+  initTypeMap() {
+    super.initTypeMap();
+    this.typeMap = {
+        'bit': Schema.TYPE_INTEGER,
+        'bit varying': Schema.TYPE_INTEGER,
+        'varbit': Schema.TYPE_INTEGER,
+
+        'bool': Schema.TYPE_BOOLEAN,
+        'boolean': Schema.TYPE_BOOLEAN,
+
+        'box': Schema.TYPE_STRING,
+        'circle': Schema.TYPE_STRING,
+        'point': Schema.TYPE_STRING,
+        'line': Schema.TYPE_STRING,
+        'lseg': Schema.TYPE_STRING,
+        'polygon': Schema.TYPE_STRING,
+        'path': Schema.TYPE_STRING,
+
+        'character': Schema.TYPE_CHAR,
+        'char': Schema.TYPE_CHAR,
+        'bpchar': Schema.TYPE_CHAR,
+        'character varying': Schema.TYPE_STRING,
+        'varchar': Schema.TYPE_STRING,
+        'text': Schema.TYPE_TEXT,
+
+        'bytea': Schema.TYPE_BINARY,
+
+        'cidr': Schema.TYPE_STRING,
+        'inet': Schema.TYPE_STRING,
+        'macaddr': Schema.TYPE_STRING,
+
+        'real': Schema.TYPE_FLOAT,
+        'float4': Schema.TYPE_FLOAT,
+        'double precision': Schema.TYPE_DOUBLE,
+        'float8': Schema.TYPE_DOUBLE,
+        'decimal': Schema.TYPE_DECIMAL,
+        'numeric': Schema.TYPE_DECIMAL,
+
+        'money': Schema.TYPE_MONEY,
+
+        'smallint': Schema.TYPE_SMALLINT,
+        'int2': Schema.TYPE_SMALLINT,
+        'int4': Schema.TYPE_INTEGER,
+        'int': Schema.TYPE_INTEGER,
+        'integer': Schema.TYPE_INTEGER,
+        'bigint': Schema.TYPE_BIGINT,
+        'int8': Schema.TYPE_BIGINT,
+        'oid': Schema.TYPE_BIGINT, // should not be used. it's pg internal!
+
+        'smallserial': Schema.TYPE_SMALLINT,
+        'serial2': Schema.TYPE_SMALLINT,
+        'serial4': Schema.TYPE_INTEGER,
+        'serial': Schema.TYPE_INTEGER,
+        'bigserial': Schema.TYPE_BIGINT,
+        'serial8': Schema.TYPE_BIGINT,
+        'pg_lsn': Schema.TYPE_BIGINT,
+
+        'date': Schema.TYPE_DATE,
+        'interval': Schema.TYPE_STRING,
+        'time without time zone': Schema.TYPE_TIME,
+        'time': Schema.TYPE_TIME,
+        'time with time zone': Schema.TYPE_TIME,
+        'timetz': Schema.TYPE_TIME,
+        'timestamp without time zone': Schema.TYPE_TIMESTAMP,
+        'timestamp': Schema.TYPE_TIMESTAMP,
+        'timestamp with time zone': Schema.TYPE_TIMESTAMP,
+        'timestamptz': Schema.TYPE_TIMESTAMP,
+        'abstime': Schema.TYPE_TIMESTAMP,
+
+        'tsquery': Schema.TYPE_STRING,
+        'tsvector': Schema.TYPE_STRING,
+        'txid_snapshot': Schema.TYPE_STRING,
+
+        'unknown': Schema.TYPE_STRING,
+
+        'uuid': Schema.TYPE_STRING,
+        'json': Schema.TYPE_JSON,
+        'jsonb': Schema.TYPE_JSONB,
+        'xml': Schema.TYPE_STRING,
+    };
+  }
+
+  getQueryBuilder() {
+    if (!this.builder) {
+      return new QueryBuilder(this.db);
+    }
+    return this.builder;
   }
 
   async loadTableSchema(name) {

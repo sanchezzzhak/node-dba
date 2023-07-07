@@ -3,6 +3,7 @@ const Schema = require('./schema');
 const Query = require('./query');
 const helper = require('./helper');
 const Expression = require('./expression');
+const SchemaTypes = require('./consts/schema-types');
 
 class ColumnSchema extends Base {
 
@@ -78,10 +79,10 @@ class ColumnSchema extends Base {
   typecast(value) {
 
     if (value === '' && [
-      Schema.TYPE_TEXT,
-      Schema.TYPE_STRING,
-      Schema.TYPE_BINARY,
-      Schema.TYPE_CHAR,
+      SchemaTypes.TYPE_TEXT,
+      SchemaTypes.TYPE_STRING,
+      SchemaTypes.TYPE_BINARY,
+      SchemaTypes.TYPE_CHAR,
     ].includes(this.type)) {
       return null;
     }
