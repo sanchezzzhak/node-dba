@@ -5,6 +5,7 @@ const Expression = require('./expression');
 class Command extends Base {
   /*** @type {PgConnection|BaseConnection} db */
   db;
+
   params = {};
   /*** @type {string} the SQL statement that this command represents */
   sql;
@@ -464,9 +465,12 @@ class Command extends Base {
     return result;
   }
 
+  async release(){
+    throw new Error('need implementation release() method for current class');
+  }
+
   async execute() {
-    const sql = this.getRawSql();
-    return await this.db.execute(sql);
+    throw new Error('need implementation execute() method for current class');
   }
 
 }

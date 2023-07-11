@@ -100,16 +100,12 @@ class BaseConnection extends Base {
   /**
    * Creates a command for execution.
    *
-   * @param {string"null} sql - the SQL statement to be executed
+   * @param {string|null} sql - the SQL statement to be executed
    * @param {{}} params - the parameters to be bound to the SQL statement
    * @return {Command}
    */
   createCommand(sql = null, params = {}) {
-    return new Command({
-      db: this,
-      sql,
-      params,
-    });
+    throw new Error('need implementation createCommand() method for current class');
   }
 
   async getTableSchema(name, refresh = false) {
@@ -128,28 +124,28 @@ class BaseConnection extends Base {
     return new ActiveQuery({db: this}, model);
   }
 
-  /**
-   *
-   * @param {string} file
-   * @returns {QueryResult[]}
-   */
-  async fileExecute(file) {
-    const sqlLines = fs.readFileSync(file).
-    toString().
-    replace(/(\r\n|\n|\r)/gm, ' ').
-    replace(/\s+/g, ' ').
-    split(';').
-    map(val => val.trim()).
-    filter(val => val !== '');
+  // /**
+  //  *
+  //  * @param {string} file
+  //  * @returns {QueryResult[]}
+  //  */
+  // async fileExecute(file) {
+  //   const sqlLines = fs.readFileSync(file).
+  //   toString().
+  //   replace(/(\r\n|\n|\r)/gm, ' ').
+  //   replace(/\s+/g, ' ').
+  //   split(';').
+  //   map(val => val.trim()).
+  //   filter(val => val !== '');
+  //
+  //   let result = [];
+  //   for(let sql of sqlLines) {
+  //     result.push(await this.createCommand(sql).execute());
+  //   }
+  //   return result;
+  // }
 
-    let result = [];
-    for(let sql of sqlLines) {
-      result.push(await this.createCommand(sql).execute());
-    }
-    return result;
-  }
-
-  execute(sql) {
+  async execute(sql) {
     throw new Error(
         `need implementation execute() method for current class ${helper.className(
             this)}`);

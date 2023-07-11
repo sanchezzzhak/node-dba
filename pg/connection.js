@@ -1,5 +1,6 @@
 const BaseConnection = require('../connection');
 const Schema = require('./schema');
+const Command = require('./command');
 const QueryResult = require('../query-result');
 const {Pool} = require('pg');
 
@@ -130,23 +131,31 @@ class PgConnection extends BaseConnection {
     });
   }
 
+  createCommand(sql = null, params = {}) {
+    return new Command({
+      db: this,
+      sql,
+      params,
+    });
+  }
+
   /**
-   * get Schema component
-   * @returns {Schema}
+   * get native client
+   * @returns {Promise<*>}
    */
+  async getNativeClient() {
+    await this.connect();
+    return await this.master.connect();
+
+  }
+
   getSchema() {
     return new Schema({
       db: this,
     });
   }
 
-  async execute(sql) {
-    await this.connect();
-
-    const client = await this.master.connect();
-    const raw = await client.query(sql);
-    await client.release(true);
-
+  createQueryResult(sql, raw) {
     const result = new QueryResult();
     result.sql = String(sql);
     if (raw) {
@@ -159,9 +168,21 @@ class PgConnection extends BaseConnection {
         result.rowCount = raw.rowCount;
       }
     }
-
     return result;
   }
+
+  /**
+   * @param {string} sql
+   * @returns {Promise<{result: QueryResult, client: *}>}
+   */
+  async execute(sql) {
+    const client = await this.getNativeClient();
+    const raw = await client.query(sql);
+    await client.release(true);
+    const result = new this.createQueryResult(sql, raw);
+    return {result, client};
+  }
+
 
 }
 

@@ -606,25 +606,29 @@ describe('tests connections', function() {
     );
   })
 
-  describe('tests commands', function() {
+  describe('tests commands', async function() {
     const db = DBA.instance(PG);
     const TABLE_NAME = 'test_table';
+    const command = db.createCommand();
 
-    // it('test create table', async function() {
-    //     await db.createCommand().createTable(TABLE_NAME, {
-    //       'name': 'varchar(255)'
-    //     })
-    // });
-
-    it('test insert', async function() {
-      let result = await db.createCommand().insert(TABLE_NAME, {
-        name: 'test'
-      })
+    it('test create table', async function() {
+        await command.createTable(TABLE_NAME, {
+          'name': 'varchar(255)'
+        })
+        await command.release();
     });
 
-    // it('test drop table', async function() {
-    //   await db.createCommand().dropTable(TABLE_NAME)
-    // });
+    it('test insert', async function() {
+      let result = await command.insert(TABLE_NAME, {
+        name: 'test'
+      })
+      await command.release()
+    });
+
+    it('test drop table', async function() {
+      await command.dropTable(TABLE_NAME)
+      await command.release()
+    });
   });
 
 

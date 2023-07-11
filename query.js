@@ -24,6 +24,7 @@ class Query extends Base {
 
   rules = {};
   db;
+  command;
 
   constructor(config = {}) {
     super();
@@ -126,9 +127,9 @@ class Query extends Base {
    * @return {Command}
    */
   createCommand(db = null) {
-    db = db ?? this.db;
-    const {sql, params} = db.getQueryBuilder().build(this);
-    return db.createCommand(sql, params);
+    const connection = db ?? this.db;
+    const {sql, params} = connection.getQueryBuilder().build(this);
+    return connection.createCommand(sql, params);
   }
 
   /*** setter object methods */
@@ -582,8 +583,13 @@ class Query extends Base {
    * @returns {*}
    */
   async all(db = null) {
-    return this.createCommand(db).queryAll();
+    const command = this.createCommand(db);
+    const result = await command.queryAll();
+    await command.release();
+    return result;
   }
+
+
 
   /**
    * Executes the query and returns map object { from: to}
