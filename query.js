@@ -24,7 +24,6 @@ class Query extends Base {
 
   rules = {};
   db;
-  command;
 
   constructor(config = {}) {
     super();
@@ -637,8 +636,11 @@ class Query extends Base {
    * @param db
    * @returns {*}
    */
-  one(db = null) {
-    return this.createCommand(db).queryOne();
+  async one(db = null) {
+    const command = this.createCommand(db);
+    const result = await command.queryOne();
+    await command.release()
+    return result
   }
 
   /**
@@ -647,8 +649,11 @@ class Query extends Base {
    * @param db
    * @returns {*}
    */
-  scalar(db = null) {
-    return this.createCommand(db).queryScalar();
+  async scalar(db = null) {
+    const command = this.createCommand(db);
+    const result = await command.queryScalar();
+    await command.release();
+    return result
   }
 
   /**
@@ -678,7 +683,6 @@ class Query extends Base {
       this.offset(null);
 
       const command = this.createCommand(db ?? this.db);
-
       this.select(select);
       this.orderBy(orderBy);
       this.limit(limit);
@@ -692,9 +696,11 @@ class Query extends Base {
       .createCommand();
   }
 
-  #queryScalar(selectExpression, db = null) {
-    return this.createScalarCommand(selectExpression, db ?? this.db).
-    queryScalar();
+  async #queryScalar(selectExpression, db = null) {
+    const command = await this.createScalarCommand(selectExpression, db ?? this.db)
+    const result = await command.queryScalar()
+    await command.release()
+    return result;
   }
 
   column(db = null) {
@@ -708,8 +714,8 @@ class Query extends Base {
    * @param db
    * @returns {*}
    */
-  count(sql = '*', db = null) {
-    return this.#queryScalar(`COUNT(${sql})`, db);
+  async count(sql = '*', db = null) {
+    return await this.#queryScalar(`COUNT(${sql})`, db);
   }
 
   /**
@@ -719,8 +725,8 @@ class Query extends Base {
    * @param db
    * @returns {*}
    */
-  sum(sql, db = null) {
-    return this.#queryScalar(`SUM(${sql})`, db);
+  async sum(sql, db = null) {
+    return await this.#queryScalar(`SUM(${sql})`, db);
   }
 
   /**
@@ -730,8 +736,8 @@ class Query extends Base {
    * @param db
    * @returns {*}
    */
-  average(sql, db = null) {
-    return this.#queryScalar(`AVG(${sql})`, db);
+  async average(sql, db = null) {
+    return await this.#queryScalar(`AVG(${sql})`, db);
   }
 
   /**
@@ -741,8 +747,8 @@ class Query extends Base {
    * @param db
    * @returns {*}
    */
-  min(sql, db = null) {
-    return this.#queryScalar(`MIN(${sql})`, db);
+  async min(sql, db = null) {
+    return await this.#queryScalar(`MIN(${sql})`, db);
   }
 
   /**
@@ -752,8 +758,8 @@ class Query extends Base {
    * @param db
    * @returns {*}
    */
-  max(sql, db = null) {
-    return this.#queryScalar(`MAX(${sql})`, db);
+  async max(sql, db = null) {
+    return await this.#queryScalar(`MAX(${sql})`, db);
   }
 
   /**
@@ -761,12 +767,14 @@ class Query extends Base {
    * @param db
    * @returns {boolean}
    */
-  exists(db = null) {
-    let command = this.createCommand(db ?? this.db);
+  async exists(db = null) {
+    const command = this.createCommand(db ?? this.db);
     let params = this.getParams();
     command.sql = `SELECT EXISTS(${command.sql})`;
     command.bindValues(params);
-    return Boolean(command.queryScalar());
+    const result = Boolean(await command.queryScalar());
+    await command.release();
+    return result;
   }
 
   join(table, on, params, type= 'JOIN') {

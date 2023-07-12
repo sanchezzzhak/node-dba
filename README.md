@@ -38,6 +38,7 @@ const query = new Query();
 const result = await query.select(['id', 'name'])
 .from('users')
 .all(db)
+
 ```
 
 * [Where](docs/WHERE.MD)
@@ -73,7 +74,6 @@ const {Migration} = require('node-dba');
 class UserTable extends Migration {
 
   async up(){
-
     await this.createTable('user', {
         'id' : this.primaryKey(11),
         'email': this.string().notNull(),
