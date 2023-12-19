@@ -279,7 +279,7 @@ class ColumnSchemaBuilder {
   toString() {
     let format = '{type}{length}{notnull}{unique}{default}{check}{comment}{append}';
     let categoryMap = this.categoryMap[this.rules['type']] ?? null;
-    if (categoryMap !== null && CATEGORY_PK === categoryMap) {
+    if (categoryMap !== null && CategoryTypes.CATEGORY_PK === categoryMap) {
       format = '{type}{check}{comment}{append}';
     }
     return this.build(format);
