@@ -34,7 +34,7 @@ class Query extends Base {
 
   /**
    * Gets the FORM part of the query.
-   * @returns {string|Object}
+   * @returns {string|Object|array|Map}
    */
   getFrom() {
     return this.rules[RULE_FROM] ?? '';
@@ -616,17 +616,34 @@ class Query extends Base {
   }
 
   /**
-   * @param {array|Expression|string} tables
+   * Set table or tables for current Query
+   * @param {array|Expression|string|object|Map} tables
+   * @example
+   * ```js
+   *
+   * ```
    */
   from(tables) {
-    if (helper.instanceOf(tables, Expression)) {
-      tables = [tables];
-    }
+    let _tables;
 
-    if (typeof tables === 'string') {
-      tables = helper.splitCommaString(tables);
+    switch (true) {
+      case helper.instanceOf(tables, Expression):
+        _tables = [tables];
+        break;
+      case helper.instanceOf(tables, Map):
+        _tables = {};
+        for (let [key, value] of tables.entries()) {
+          _tables[key] = value;
+        }
+        break;
+      case typeof tables === 'string':
+        _tables = helper.splitCommaString(tables);
+        break;
+      default:
+        _tables = tables;
+        break;
     }
-    this.rules[RULE_FROM] = tables;
+    this.rules[RULE_FROM] = _tables;
     return this;
   }
 
