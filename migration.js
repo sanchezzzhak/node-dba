@@ -71,10 +71,74 @@ class Migration {
   }
 
   /**
+   * Generate base index name by standard convention naming indexes
+   *
+   * @param {string} tableName
+   * @param {array|string} column
+   * @param {boolean} isUnique
+   * @returns {string}
+   */
+  getIndexName(tableName, column, isUnique = false) {
+    let suffixQ = isUnique ? 'q' : '';
+    let columns = Array.isArray(column) ? column.join('_') : column;
+    return `idx${suffixQ}_${tableName}-${columns}`
+  }
+
+  /**
+   * Builds and executes a SQL statement for create index a DB table (use standard convention naming indexes).
+   *
+   * @param {string} tableName
+   * @param {array|string} column
+   * @param {boolean} isUnique
+   * @returns {Promise<any>}
+   */
+  async createIndexConvention(tableName, column, isUnique = false) {
+    const name = this.getIndexName(tableName, column, isUnique);
+    return await this.createIndex(name, tableName, column, isUnique);
+  }
+
+  /**
+   * Builds and executes a SQL statement for drop index a DB table (use standard convention naming indexes).
+   *
+   * @param {string} tableName
+   * @param {array|string} column
+   * @param {boolean} isUnique
+   * @returns {Promise<any>}
+   */
+  async dropIndexConvention(tableName, column, isUnique = false) {
+    const name = this.getIndexName(tableName, column, isUnique);
+    return await this.dropIndex(name, tableName, column, isUnique);
+  }
+
+  /**
+   * Builds and executes a SQL statement for create index a DB table.
+   *
+   * @param {string} name
+   * @param {string} tableName
+   * @param {array|string} column
+   * @param {boolean} isUnique
+   * @returns {Promise<any>}
+   */
+  async createIndex(name, tableName, column, isUnique = false) {
+    return await this.db.createCommand().createIndex(name, tableName, column, isUnique);
+  }
+
+  /**
+   * Builds and executes a SQL statement for drop index a DB table.
+   *
+   * @param {string} name
+   * @param {string} tableName
+   * @returns {Promise<any>}
+   */
+  async dropIndex(name, tableName) {
+    return await this.db.createCommand().dropIndex(name, tableName);
+  }
+
+  /**
    * Builds and executes a SQL statement for truncating a DB table.
    *
    * @param {string} table
-   * @returns {Promise<void>}
+   * @returns {Promise<any>}
    */
   async truncateTable(table) {
     return await this.db.createCommand().truncateTable(table);
@@ -89,9 +153,6 @@ class Migration {
   primaryKey(length = null) {
     return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_PK, length);
   }
-
-
-
 
   /**
    * Creates a big primary key column.
