@@ -210,7 +210,7 @@ class QueryBuilder {
   /**
    * Creates a condition based on column-value pairs.
    *
-   * @param {array|{}} condition
+   * @param {array|{}|string} condition
    * @param {{}} params
    * @returns {{}}
    */
@@ -301,10 +301,10 @@ class QueryBuilder {
   buildLimit(limit, offset) {
     let result = [];
     if (this.hasLimit(limit)) {
-      result.push('LIMIT '.limit);
+      result.push('LIMIT ' + limit);
     }
     if (this.hasOffset(offset)) {
-      result.push('OFFSET '.offset);
+      result.push('OFFSET ' + offset);
     }
 
     return result.join(' ');

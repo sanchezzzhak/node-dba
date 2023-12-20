@@ -4,11 +4,10 @@ const {InCondition} = require("../conditions");
 const Query = require("../query");
 const helper = require("../helper");
 
-
 class HashConditionBuilder extends ExpressionBuilder
 {
   /**
-   *
+   * Build hash conditions
    * @param {HashCondition|{}} expression
    * @param params
    */
@@ -31,10 +30,10 @@ class HashConditionBuilder extends ExpressionBuilder
           continue;
         }
         if (helper.instanceOf(value, Expression)) {
-          parts.push(`${column}=${this.queryBuilder.buildExpression(value, params)}`);
+          parts.push(`${column} = ${this.queryBuilder.buildExpression(value, params)}`);
           continue;
         }
-        parts.push(`${column}=${this.queryBuilder.bindParam(value, params)}`);
+        parts.push(`${column} = ${this.queryBuilder.bindParam(value, params)}`);
       }
 
       return parts.length === 1
