@@ -26,9 +26,10 @@ class DBA {
   /**
    * get db connection
    * @param {string} configName
+   * @param {{}} overwriteConfig
    * @returns {*}
    */
-  static instance(configName = 'db') {
+  static instance(configName = 'db', overwriteConfig = {}) {
     if (instances[configName] !== void 0) {
       return instances[configName];
     }
@@ -49,7 +50,7 @@ class DBA {
 
     try {
       const Connection = require(`./${driver}/connection`);
-      instances[configName] = new Connection(config);
+      instances[configName] = new Connection({...config, ...overwriteConfig});
     } catch (err) {
       throw err;
     }

@@ -6,6 +6,7 @@ const {Pool} = require('pg');
 
 /**
  * @typedef ConfigPostgres
+ * @property {string} applicationName
  * @property {string} host
  * @property {number} port
  * @property {string} database
@@ -70,6 +71,7 @@ class PgConnection extends BaseConnection {
    */
   async disconnect() {
     await this.closePool(this.master);
+
     await Promise.all(this.slaves.map((slave) => this.closePool(slave)));
     this.master = void 0;
     this.slaves = [];
@@ -96,6 +98,7 @@ class PgConnection extends BaseConnection {
   async createPool(options) {
 
     const config = {
+      application_name: options.applicationName ?? 'node-dba-client',
       host: options.host ?? 'localhost',
       database: options.database,
       user: options.username,
@@ -108,15 +111,17 @@ class PgConnection extends BaseConnection {
     };
 
     const pool = new Pool(config);
+
     pool.on('connect', (client) => {
-      this.emit(this.EVENTS.CONNECT, {client});
+       this.emit(this.EVENTS.CONNECT, {client});
     });
+
     pool.on('error', (err, client) => {
-      this.emit(this.EVENTS.ERROR, {err, client});
+       this.emit(this.EVENTS.ERROR, {err, client});
     });
 
     return new Promise((resolve, reject) => {
-      pool.connect(async (err, client, release) => {
+      pool.connect(async (err, connection, release) => {
         if (err) {
           return reject(err);
         }
@@ -146,7 +151,6 @@ class PgConnection extends BaseConnection {
   async getNativeClient() {
     await this.connect();
     return await this.master.connect();
-
   }
 
   getSchema() {
@@ -179,7 +183,7 @@ class PgConnection extends BaseConnection {
     const client = await this.getNativeClient();
     const raw = await client.query(sql);
     await client.release(true);
-    const result = new this.createQueryResult(sql, raw);
+    const result = this.createQueryResult(sql, raw);
     return {result, client};
   }
 
