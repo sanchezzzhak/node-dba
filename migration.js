@@ -154,6 +154,10 @@ class Migration {
     return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_PK, length);
   }
 
+  primaryUUIDKey() {
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_UUIDPK);
+  }
+
   /**
    * Creates a big primary key column.
    *

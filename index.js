@@ -58,6 +58,10 @@ class DBA {
     return instances[configName] ?? {};
   }
 
+  static getConfigs() {
+    return configMap;
+  }
+
   /**
    * load config for json or js files
    * @param dirPath

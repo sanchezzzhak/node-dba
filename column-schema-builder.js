@@ -24,6 +24,7 @@ class ColumnSchemaBuilder {
     this.categoryMap = {};
     this.categoryMap[SchemaTypes.TYPE_PK] = CategoryTypes.CATEGORY_PK;
     this.categoryMap[SchemaTypes.TYPE_UPK] = CategoryTypes.CATEGORY_PK;
+    this.categoryMap[SchemaTypes.TYPE_UUIDPK] = CategoryTypes.CATEGORY_PK;
     this.categoryMap[SchemaTypes.TYPE_BIGPK] = CategoryTypes.CATEGORY_PK;
     this.categoryMap[SchemaTypes.TYPE_UBIGPK] = CategoryTypes.CATEGORY_PK;
     this.categoryMap[SchemaTypes.TYPE_CHAR] = CategoryTypes.CATEGORY_STRING;

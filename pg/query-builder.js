@@ -23,6 +23,7 @@ class QueryBuilder extends BaseQueryBuilder {
     this.typeMap[SchemaTypes.TYPE_UPK] = 'serial NOT NULL PRIMARY KEY';
     this.typeMap[SchemaTypes.TYPE_BIGPK] = 'bigserial NOT NULL PRIMARY KEY';
     this.typeMap[SchemaTypes.TYPE_UBIGPK] = 'bigserial NOT NULL PRIMARY KEY';
+    this.typeMap[SchemaTypes.TYPE_UUIDPK] = 'uuid NOT NULL PRIMARY KEY';
     this.typeMap[SchemaTypes.TYPE_CHAR] = 'char(1)';
     this.typeMap[SchemaTypes.TYPE_STRING] = 'varchar(255)';
     this.typeMap[SchemaTypes.TYPE_TEXT] = 'text';

@@ -3,6 +3,7 @@ module.exports = {
   TYPE_UPK: 'upk',
   TYPE_BIGPK: 'bigpk',
   TYPE_UBIGPK: 'ubigpk',
+  TYPE_UUIDPK: 'uuidpk',
   TYPE_CHAR: 'char',
   TYPE_STRING: 'string',
   TYPE_TEXT: 'text',
