@@ -2,27 +2,29 @@ const Migrate = require('../../migration')
 
 class car_table extends Migrate {
 
-  CAR_TABLE = 'car';
+	CAR_TABLE = 'car';
 
-  async up() {
-	await this.createTable(this.CAR_TABLE, {
-	  'id': this.primaryKey(),
-	  'brand': this.string().notNull(),
-	  'model': this.string().notNull(),
-	  'created_at': this.timestamp(),
-	  'updated_at': this.timestamp()
-	})
+	async up() {
+		await this.createTable(this.CAR_TABLE, {
+			'id': this.primaryKey(),
+			'brand': this.string().notNull(),
+			'model': this.string().notNull(),
+			'created_at': this.timestamp(),
+			'updated_at': this.timestamp()
+				.defaultExpression(this.currentTimestamp())
+				.onUpdate(this.currentTimestamp())
+		})
 
-	await this.createIndexConvention(this.CAR_TABLE, ['brand']);
-	await this.createIndex('idx_car-model', this.CAR_TABLE, ['model']);
+		await this.createIndexConvention(this.CAR_TABLE, ['brand']);
+		await this.createIndex('idx_car-model', this.CAR_TABLE, ['model']);
 
-	return true;
-  }
+		return true;
+	}
 
-  async down() {
-	await this.dropTable(this.CAR_TABLE);
-	return true;
-  }
+	async down() {
+		await this.dropTable(this.CAR_TABLE);
+		return true;
+	}
 
 }
 

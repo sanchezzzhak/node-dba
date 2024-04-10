@@ -23,10 +23,11 @@ class Command extends BaseCommand {
    */
   async initClient() {
     if (!this.client) {
-      this.client = await this.db.getNativeClient();
+      this.client = await this.getConnect();
     }
     return true;
   }
+
 
 
 
@@ -63,6 +64,7 @@ class Command extends BaseCommand {
       release ? await this.release() : null;
     }
   }
+  //
 
   /**
    * Execute command for current sql
@@ -70,9 +72,9 @@ class Command extends BaseCommand {
    * @returns {Promise<QueryResult>}
    */
   async execute() {
-    await this.initClient();
-    const sql = this.getRawSql();
-    const raw = await this.client.query(sql);
+    const sql= this.getRawSql();
+    const client = this.client ?? await this.db.getPoolConnect(sql);
+    const raw = await client.query(sql);
     return this.db.createQueryResult(sql, raw);
   }
 }

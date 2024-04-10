@@ -520,10 +520,10 @@ class QueryBuilder {
    * @param {Object} conditionParams
    * @return {string}
    */
-  update(table, columns, condition, conditionParams) {
+  async update(table, columns, condition, conditionParams) {
     let [sets, params] = this.#prepareUpdateSets(table, columns,
         conditionParams);
-    const sql = `UPDATE ${this.db.getTableSchema(table)} SET ${sets.join(
+    const sql = `UPDATE ${this.db.quoteTableName(table)} SET ${sets.join(
         sets)}`;
     const where = this.buildWhere(condition, params);
     return where === '' ? sql : `${sql} ${where}`;

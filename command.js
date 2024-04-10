@@ -157,8 +157,7 @@ class Command extends Base {
    * @returns {Promise<*>}
    */
   async update(table, columns, condition = '', params = {}) {
-    let sql = await this.db.getQueryBuilder().
-    update(table, columns, condition, params);
+    let sql = await this.db.getQueryBuilder().update(table, columns, condition, params);
     this.setSql(sql);
     this.bindValues(params);
     return await this.execute();
