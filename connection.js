@@ -29,10 +29,11 @@ class BaseConnection extends Base {
 
   /**
    * get driver name for currently connection
+   * @return {string}
    */
-  static get driverName() {
+  getDriverName() {
     throw new Error(
-        'need implementation driverName() getter for current class');
+        'need implementation getDriverName() method for current class');
   }
 
   /**
@@ -94,7 +95,7 @@ class BaseConnection extends Base {
    * @returns {*}
    */
   createColumnSchemaBuilder(type, length) {
-      return new ColumnSchemaBuilder(type, length, this.db)
+      return new ColumnSchemaBuilder(type, length, this)
     }
 
   /**

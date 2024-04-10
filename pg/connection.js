@@ -2,6 +2,7 @@ const BaseConnection = require('../connection');
 const Schema = require('./schema');
 const Command = require('./command');
 const QueryResult = require('../query-result');
+const {POSTGRES} = require('../consts/drivers');
 const {Pool} = require('pg');
 
 /**
@@ -29,8 +30,11 @@ class PgConnection extends BaseConnection {
 
   isReplicated = false;
 
-  static get getDriverName() {
-    return 'pg';
+  /**
+   * @return {string}
+   */
+  getDriverName() {
+    return POSTGRES;
   }
 
   /**
@@ -136,6 +140,12 @@ class PgConnection extends BaseConnection {
     });
   }
 
+  /**
+   *
+   * @param sql {string|null}
+   * @param params
+   * @return {Command}
+   */
   createCommand(sql = null, params = {}) {
     return new Command({
       db: this,

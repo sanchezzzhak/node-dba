@@ -1,5 +1,6 @@
 const axios = require('axios');
-const BaseConnection = require('../сonnection');
+const BaseConnection = require('../connection');
+const {CLICKHOUSE} = require('../consts/drivers');
 
 /**
  * @typedef ConfigClickHouse
@@ -12,18 +13,24 @@ const BaseConnection = require('../сonnection');
  * @property {ConfigPostgres[]} slaves
  */
 
-class ClickHouseConnection extends BaseConnection
-{
-  /**
-   * @param {ConfigClickHouse} config
-   */
-  constructor(config) {
-    super();
+class ClickHouseConnection extends BaseConnection {
+	/**
+	 * @param {ConfigClickHouse} config
+	 */
+	constructor(config) {
+		super();
 
-    if (!config) {
-      return;
-    }
-    this.#config = config;
-  }
+		if (!config) {
+			return;
+		}
+		this.#config = config;
+	}
+
+	/**
+	 * @return {string}
+	 */
+	getDriverName() {
+		return CLICKHOUSE;
+	}
 
 }

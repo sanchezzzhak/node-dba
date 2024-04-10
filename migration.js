@@ -1,4 +1,5 @@
 const SchemaTypes = require('./consts/schema-types');
+const Drivers = require('./consts/drivers');
 
 class Migration {
 
@@ -44,8 +45,13 @@ class Migration {
    */
   async createTable(table, columns, options = null) {
     await this.db.createCommand().createTable(table, columns, options);
-    for (let [type, column] of Object.entries(columns)) {
+    for (let [name, column] of Object.entries(columns)) {
       // added comment to column
+      if (Drivers.POSTGRES === this.db.getDriverName() && column.rules['comment'] !== void 0) {
+        await this.db.createCommand(`comment on column "${table}"."${name}" is :comment`, {
+          ':comment': column.rules['comment']
+        }).execute()
+      }
     }
   }
 
@@ -346,6 +352,30 @@ class Migration {
       length.push(scale);
     }
     return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_MONEY, length);
+  }
+
+  /**
+   * @supported [pg, mysql, clickhouse]
+   * @return {string}
+   */
+  now() {
+    return 'NOW()';
+  }
+
+  /**
+   * @supported [pg, mysql]
+   * @return {string}
+   */
+  currentTimestamp() {
+    return 'CURRENT_TIMESTAMP';
+  }
+
+  /**
+   * @supported [pg]
+   * @return {string}
+   */
+  currentTimestampZ() {
+    return 'CURRENT_TIMESTAMPZ';
   }
 
 }

@@ -2,11 +2,12 @@ const Expression = require('./expression');
 const Schema = require('./schema');
 const helper = require('./helper');
 const SchemaTypes = require('./consts/schema-types');
+const Drivers = require('./consts/drivers');
 const CategoryTypes = require('./consts/category-types');
 
 
 class ColumnSchemaBuilder {
-
+  /** @type {BaseConnection|PgConnection|ClickHouseConnection} */
   db;
   rules = {};
 
@@ -118,6 +119,11 @@ class ColumnSchemaBuilder {
     return this;
   }
 
+  onUpdate(value) {
+    this.rules['on'] = new Expression(value);
+    return this;
+  }
+
   /**
    * Specifies the comment for column.
    *
@@ -193,7 +199,7 @@ class ColumnSchemaBuilder {
     if (defaultValue === null) {
       defaultValue = this.rules['isNotNull'] === false ? 'NULL' : null;
     } else if (helper.instanceOf(defaultValue, Expression)) {
-      defaultValue = this.db.getQueryBuilder.buildExpression(defaultValue);
+      defaultValue = this.db.getQueryBuilder().buildExpression(defaultValue);
     } else {
       switch (typeof defaultValue) {
         case 'bigint':
@@ -219,6 +225,19 @@ class ColumnSchemaBuilder {
     return ` DEFAULT ${defaultValue}`;
   }
 
+  /**
+   * @supported [mysql]
+   * @return {string}
+   */
+  buildOnUpdate() {
+    const value = this.rules['on'] ?? null;
+    if (value === null || this.db.getDriverName() === Drivers.POSTGRES) {
+      return '';
+    }
+    const part =  this.db.getQueryBuilder().buildExpression(value);
+    return ` ON UPDATE ${part}`;
+  }
+
   buildUnique() {
     return (this.rules['isUnique'] ?? false) ? ' UNIQUE' : '';
   }
@@ -228,17 +247,23 @@ class ColumnSchemaBuilder {
    * @returns {string}
    */
   buildCheck() {
-    return '';
+    return helper.isset(this.rules['check']) && this.rules['check']
+      ? ` CHECK (${this.rules['check']})`
+      : '';
   }
 
   /**
    * Builds the comment specification for the column.
+   * @supported [mysql]
    * @returns {string}
    */
   buildComment() {
-    return helper.isset(this.rules['check']) && this.rules['check']
-        ? ` CHECK (${this.rules['check']})`
-        : '';
+    if (this.db.getDriverName() === Drivers.POSTGRES) {
+      return '';
+    }
+
+    const comment = this.rules['comment'];
+    return ` COMMENT '${comment}'`;
   }
 
   /**
@@ -268,6 +293,7 @@ class ColumnSchemaBuilder {
       '{notnull}': this.buildNotNull(),
       '{unique}': this.buildUnique(),
       '{default}': this.buildDefault(),
+      '{on}': this.buildOnUpdate(),
       '{check}': this.buildCheck(),
       '{comment}': this.buildComment(),
       '{pos}': this.buildPos(),
@@ -278,7 +304,7 @@ class ColumnSchemaBuilder {
   }
 
   toString() {
-    let format = '{type}{length}{notnull}{unique}{default}{check}{comment}{append}';
+    let format = '{type}{length}{notnull}{unique}{default}{on}{check}{comment}{append}';
     let categoryMap = this.categoryMap[this.rules['type']] ?? null;
     if (categoryMap !== null && CategoryTypes.CATEGORY_PK === categoryMap) {
       format = '{type}{check}{comment}{append}';
