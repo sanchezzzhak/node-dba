@@ -45,7 +45,7 @@ class ColumnSchemaBuilder {
     this.categoryMap[SchemaTypes.TYPE_BINARY] = CategoryTypes.CATEGORY_OTHER;
     this.categoryMap[SchemaTypes.TYPE_BOOLEAN] = CategoryTypes.CATEGORY_NUMERIC;
     this.categoryMap[SchemaTypes.TYPE_MONEY] = CategoryTypes.CATEGORY_NUMERIC;
-
+    this.categoryMap[SchemaTypes.TYPE_UUID] = CategoryTypes.CATEGORY_STRING;
   }
 
   /**

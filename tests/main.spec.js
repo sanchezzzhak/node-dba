@@ -28,6 +28,12 @@ describe('active records', function () {
 		CarRotate.getDb();
 		expect(CarRotate.getDb()).to.equal(db);
 	});
+
+	// it('test insert' async () => {
+	// 	// let model = new CarRotate();
+	// 	// model.save();
+	// })
+
 });
 
 describe('tests connections', function () {
@@ -603,6 +609,14 @@ describe('tests queries', function () {
 			})
 			await command.release()
 		});
+
+		it('test insert', async function () {
+			let result = await command.delete(TABLE_NAME, {
+				name: 'test'
+			})
+			await command.release()
+		});
+
 
 		it('test drop table', async function () {
 			await command.dropTable(TABLE_NAME)

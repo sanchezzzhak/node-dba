@@ -22,4 +22,5 @@ module.exports = {
   TYPE_BOOLEAN: 'boolean',
   TYPE_MONEY: 'money',
   TYPE_JSON: 'json',
+  TYPE_UUID: 'uuid',
 };

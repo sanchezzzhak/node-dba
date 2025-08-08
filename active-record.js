@@ -34,14 +34,11 @@ class ActiveRecord extends Base {
 
   }
 
-  static updateAll(attributes, condition, params = {}) {
-    return this.getDb()
-    .createCommand()
-    .update(this.tableName(), attributes, params)
-    .execute()
+  static async updateAll(attributes, condition, params = {}) {
+    return await this.getDb().createCommand().update(this.tableName(), attributes, params)
   }
 
-  static updateAllCounters(counters, condition, params = {}) {
+  static async updateAllCounters(counters, condition, params = {}) {
     const bindParams = {};
     let inc = 0;
     for (let [key, value] of Object.entries(counters)) {
@@ -50,10 +47,7 @@ class ActiveRecord extends Base {
       bindParams[key] = new Expression(`[[${name}]]+:bp${inc}`, bindParam);
       inc++;
     }
-    return this.getDb().
-    createCommand().
-    update(this.tableName(), bindParams, condition, params).
-    execute()
+    return await this.getDb().createCommand().update(this.tableName(), bindParams, condition, params)
 
   }
 
@@ -63,11 +57,8 @@ class ActiveRecord extends Base {
    * @param {Object} params
    * @return {number}
    */
-  static deleteAll(condition, params = {}) {
-    return this.getDb().
-    createCommand().
-    delete(this.tableName(), condition, params).
-    execute();
+  static async deleteAll(condition, params = {}) {
+    return await this.getDb().createCommand().delete(this.tableName(), condition, params)
   }
 
   /**

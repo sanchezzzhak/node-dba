@@ -209,8 +209,7 @@ class Command extends Base {
   }
 
   async upsert(table, insertColumns, updateColumns = true, params = {}) {
-    let sql = await this.db.getQueryBuilder().
-    upsert(table, insertColumns, updateColumns, params);
+    let sql = await this.db.getQueryBuilder().upsert(table, insertColumns, updateColumns, params);
     this.setSql(sql);
     this.bindValues(params);
     return await this.execute();

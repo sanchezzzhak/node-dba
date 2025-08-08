@@ -160,6 +160,11 @@ class Migration {
     return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_PK, length);
   }
 
+
+	uuid() {
+     return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_UUID);
+  }
+
   primaryUUIDKey() {
     return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_UUIDPK);
   }
