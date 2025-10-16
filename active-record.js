@@ -8,11 +8,16 @@ const lowerCaseTable = function(id, separator = '_') {
 
 class ActiveRecord extends Base {
 
-  static getDb() {
-    return DBA.instance(this.getDbName());
+  /**
+   * Get db connection
+   * @return {*}
+   */
+  static getDb(overwriteConfig = null) {
+    return DBA.instance(this.getDbName(), overwriteConfig);
   }
 
   /**
+   * Get database connection name string
    * @return {String}
    */
   static getDbName() {
@@ -22,6 +27,7 @@ class ActiveRecord extends Base {
   }
 
   /**
+   * Get table name for active record model
    * @return {String}
    */
   static tableName() {
@@ -62,6 +68,7 @@ class ActiveRecord extends Base {
   }
 
   /**
+   * Create find ActiveQuery
    * @return {ActiveQuery}
    */
   static find() {
