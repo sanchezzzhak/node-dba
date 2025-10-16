@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/sanchezzzhak/node-dba#readme",
   "engines": {
-    "node": ">= 16.x",
+    "node": ">= 17.x",
     "npm": ">= 8.x"
   },
   "devDependencies": {

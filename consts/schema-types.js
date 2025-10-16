@@ -16,6 +16,7 @@ module.exports = {
   TYPE_DECIMAL: 'decimal',
   TYPE_DATETIME: 'datetime',
   TYPE_TIMESTAMP: 'timestamp',
+  TYPE_TIMESTAMPZ: 'timestampz',
   TYPE_TIME: 'time',
   TYPE_DATE: 'date',
   TYPE_BINARY: 'binary',

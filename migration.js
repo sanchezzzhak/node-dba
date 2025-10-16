@@ -209,6 +209,18 @@ class Migration {
   }
 
   /**
+   * Create a timestmapz column
+   *
+   * @param {number|null} length
+   * @return {ColumnSchemaBuilder}
+   */
+  timestampz(length = null) {
+    return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_TIMESTAMPZ, length);
+    return this;
+  }
+
+
+  /**
    *  Creates a tinyint column. If tinyint is not supported by the DBMS, smallint will be used.
    *
    * @param {number|null} length
@@ -244,7 +256,7 @@ class Migration {
    * @param {number|null} length
    * @returns {*|ColumnSchemaBuilder}
    */
-  bigInteger(length) {
+  bigInteger(length= null) {
     return this.db.createColumnSchemaBuilder(SchemaTypes.TYPE_BIGINT, length);
   }
 

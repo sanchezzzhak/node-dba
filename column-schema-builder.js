@@ -40,6 +40,7 @@ class ColumnSchemaBuilder {
     this.categoryMap[SchemaTypes.TYPE_DECIMAL] = CategoryTypes.CATEGORY_NUMERIC;
     this.categoryMap[SchemaTypes.TYPE_DATETIME] = CategoryTypes.CATEGORY_TIME;
     this.categoryMap[SchemaTypes.TYPE_TIMESTAMP] = CategoryTypes.CATEGORY_TIME;
+    this.categoryMap[SchemaTypes.TYPE_TIMESTAMPZ] = CategoryTypes.CATEGORY_TIME;
     this.categoryMap[SchemaTypes.TYPE_TIME] = CategoryTypes.CATEGORY_TIME;
     this.categoryMap[SchemaTypes.TYPE_DATE] = CategoryTypes.CATEGORY_TIME;
     this.categoryMap[SchemaTypes.TYPE_BINARY] = CategoryTypes.CATEGORY_OTHER;
@@ -75,6 +76,16 @@ class ColumnSchemaBuilder {
    */
   unique() {
     this.rules['isUnique'] = true;
+    return this;
+  }
+
+  precision() {
+    this.rules['numberType'] = 'PRECISION';
+    return this;
+  }
+
+  numeric() {
+    this.rules['numberType'] = 'NUMERIC';
     return this;
   }
 
@@ -165,6 +176,11 @@ class ColumnSchemaBuilder {
    * @returns {string}
    */
   buildLength() {
+    
+    if (this.rules.type === SchemaTypes.TYPE_DOUBLE && this.rules['numberType']) {
+      return this.rules['numberType'];
+    }
+
     if (helper.empty(this.rules['length'])) {
       return '';
     }
