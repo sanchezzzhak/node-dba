@@ -1,4 +1,4 @@
-const BaseCommand = require('../command');
+const BaseCommand = require('../command.js');
 
 class Command extends BaseCommand {
 

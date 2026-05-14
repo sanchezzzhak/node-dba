@@ -13,7 +13,7 @@ const {
   BetweenCondition,
   InCondition,
   LikeCondition,
-} = require('./conditions');
+} = require('../conditions');
 
 const {
   QueryExpressionBuilder,
@@ -25,7 +25,7 @@ const {
   InConditionBuilder,
   LikeConditionBuilder,
   HashConditionBuilder,
-} = require('./builders');
+} = require('../builders');
 
 const PARAM_PREFIX = ':qp';
 const COLUMN_SEPARATOR = ', ';

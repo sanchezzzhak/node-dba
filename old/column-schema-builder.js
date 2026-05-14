@@ -1,9 +1,9 @@
 const Expression = require('./expression');
 const Schema = require('./schema');
 const helper = require('./helper');
-const SchemaTypes = require('./consts/schema-types');
-const Drivers = require('./consts/drivers');
-const CategoryTypes = require('./consts/category-types');
+const SchemaTypes = require('../consts/schema-types');
+const Drivers = require('../consts/drivers');
+const CategoryTypes = require('../consts/category-types');
 
 
 class ColumnSchemaBuilder {

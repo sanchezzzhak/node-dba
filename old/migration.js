@@ -1,5 +1,5 @@
-const SchemaTypes = require('./consts/schema-types');
-const Drivers = require('./consts/drivers');
+const SchemaTypes = require('../consts/schema-types');
+const Drivers = require('../consts/drivers');
 
 class Migration {
 

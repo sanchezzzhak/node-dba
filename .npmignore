@@ -10,3 +10,7 @@ tests/
 .nyc_output
 coverage/
 docs/
+.gitattributes
+.gitignore
+yarn.lock
+vite.config.js

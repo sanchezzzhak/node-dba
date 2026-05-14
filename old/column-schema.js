@@ -3,7 +3,7 @@ const Schema = require('./schema');
 const Query = require('./query');
 const helper = require('./helper');
 const Expression = require('./expression');
-const SchemaTypes = require('./consts/schema-types');
+const SchemaTypes = require('../consts/schema-types');
 
 class ColumnSchema extends Base {
 

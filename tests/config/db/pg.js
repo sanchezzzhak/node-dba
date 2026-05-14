@@ -1,5 +1,5 @@
 
-const postgressConfig = {
+export default {
   driver: 'pg',
   host: 'localhost',
   username: 'postgres',
@@ -7,5 +7,3 @@ const postgressConfig = {
   database: 'test-dba',
   port: 5432,
 }
-
-module.exports = postgressConfig;

@@ -1,7 +1,7 @@
 const Base = require('./base');
 const QueryBuilder = require('./query-builder');
 const helper = require('./helper');
-const SchemaTypes = require('./consts/schema-types');
+const SchemaTypes = require('../consts/schema-types');
 
 const TYPE_SCHEMA = 'schema';
 
