@@ -1,2 +1,3 @@
 import DBA from './dba.js';
-export {DBA}
+import Expression from './expression.js';
+export {DBA, Expression}

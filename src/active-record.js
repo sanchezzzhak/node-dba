@@ -1,19 +1,21 @@
-const helper = require('./helper');
-const Base = require('./base');
-const {DBA, Expression} = require('./index');
+import * as helper from './helper.js';
+import Expression from './expression.js';
+import DBA from './dba.js';
+import Base from './base.js';
 
-const lowerCaseTable = function(id, separator = '_') {
+
+const lowerCaseTable = (id, separator = '_') => {
   return helper.words(id).join(separator).toLowerCase();
 };
 
-class ActiveRecord extends Base {
+export default class ActiveRecord extends Base {
 
   /**
    * Get db connection
    * @return {*}
    */
   static getDb(overwriteConfig = null) {
-    return DBA.instance(this.getDbName(), overwriteConfig);
+    return DBA.dialect(this.getDbName(), overwriteConfig);
   }
 
   /**
@@ -36,15 +38,32 @@ class ActiveRecord extends Base {
     );
   }
 
+  /**
+   * reload data from db
+   */
   refresh() {
 
   }
 
+  /**
+   * Update rows or attributes by condition + params
+   * @param attributes
+   * @param condition
+   * @param params
+   * @return {Promise<*>}
+   */
   static async updateAll(attributes, condition, params = {}) {
     return await this.getDb().createCommand().update(this.tableName(), attributes, params)
   }
 
-  static async updateAllCounters(counters, condition, params = {}) {
+  /**
+   * Update counters increments
+   * @param counters
+   * @param condition
+   * @param params
+   * @return {Promise<*>}
+   */
+  static async updateCounters(counters, condition, params = {}) {
     const bindParams = {};
     let inc = 0;
     for (let [key, value] of Object.entries(counters)) {
@@ -58,7 +77,7 @@ class ActiveRecord extends Base {
   }
 
   /**
-   * Updates the whole table using the provided counter changes and conditions.
+   * Delete rows by condition + params
    * @param {Object|String} condition
    * @param {Object} params
    * @return {number}
@@ -75,16 +94,35 @@ class ActiveRecord extends Base {
     return this.getDb().getActiveQuery();
   }
 
+  /**
+   * Relation has one pattern
+   * @param model
+   * @param link
+   * @return {*}
+   */
   hasOne(model, link) {
     return this.#createRelationQuery(model, link, false);
   }
 
+  /**
+   * Relation has many pattern
+   * @param model
+   * @param link
+   * @return {*}
+   */
   hasMany(model, link) {
     return this.#createRelationQuery(model, link, true);
   }
 
+  /**
+   * Inline method create relation link
+   * @param className
+   * @param link
+   * @param multiple
+   * @return {*}
+   */
   #createRelationQuery(className, link, multiple) {
-    let query = (className).find();
+    const query = (className).find();
     query.primatyModel = this;
     query.link = link;
     query.multiple = multiple;
@@ -92,5 +130,3 @@ class ActiveRecord extends Base {
   }
 
 }
-
-module.exports = ActiveRecord;
