@@ -1,6 +1,6 @@
-const Base = require('./base');
-const helper = require('./helper');
-const Expression = require('./expression');
+import Base from './base.js'
+import * as helper from './helper.js'
+import Expression from './expression.js'
 
 const
     RULE_SELECT = 'select',
@@ -20,7 +20,7 @@ const
     RULE_WITH = 'with',
     RULE_WITH_JOIN = 'withJoin';
 
-class Query extends Base {
+export default class Query extends Base {
 
   rules = {};
   db;
@@ -918,5 +918,3 @@ class Query extends Base {
   }
 
 }
-
-module.exports = Query;

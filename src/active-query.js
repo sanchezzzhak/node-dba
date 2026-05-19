@@ -1,13 +1,10 @@
-const Query = require('./query')
+import Query from './query.js'
 
-class ActiveQuery extends Query
+export default class ActiveQuery extends Query
 {
    model;
-
    constructor(params, model) {
      super(params);
      this.model = model;
    }
 }
-
-module.exports = Query;
