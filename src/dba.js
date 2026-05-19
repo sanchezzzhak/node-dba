@@ -2,6 +2,7 @@ import DRIVERS from './consts/drivers.js';
 import Dialect from './dialect.js';
 import {readdirSync} from 'node:fs';
 import * as path from "node:path";
+import { pathToFileURL } from 'node:url';
 
 export default class DBA {
 	static configMap = {};
@@ -57,7 +58,8 @@ export default class DBA {
 		await Promise.all(files.map(async (file) => {
 			const name = path.parse(file.name).name;
 			const fullPath = path.resolve(dirPath, file.name);
-			const module = await import(fullPath);
+			const fileUrl = pathToFileURL(fullPath).href;
+			const module = await import(fileUrl);
 			DBA.configMap[name] = module.default ?? module;
 		}));
 	}

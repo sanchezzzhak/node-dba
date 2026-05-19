@@ -6,7 +6,7 @@
   "module": "./src/index.js",
   "description": "Nodejs database ActiveRecord for (mySQL, Postgress, ClickHouse)",
   "scripts": {
-    "test": "node --test --test-reporter=spec tests/*.spec.js",
+    "test": "node --test --test-reporter=spec ./tests/main.spec.js",
     "build": "vite build"
   },
   "keywords": [

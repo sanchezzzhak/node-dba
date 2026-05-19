@@ -3,6 +3,8 @@ import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
 
 const TIMEOUT = 20000;
 const PG = 'pg';
@@ -20,11 +22,9 @@ const expectSql = (expectSql, equalSql) => {
 	);
 };
 
-const configPath = join(dirname(fileURLToPath(import.meta.url)), 'config', 'db');
-
 describe('main', async function(){
 	before(async () => {
-		await DBA.loadConfigsForDir(configPath);
+		await DBA.loadConfigsForDir('./tests/config/db');
 	});
 	it('должен генерировать правильный SELECT запрос', () => {
 		const generatedQuery = `
